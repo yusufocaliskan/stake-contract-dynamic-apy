@@ -95,17 +95,20 @@ contract GPTSaleAllocation is Ownable, ReentrancyGuard {
 
 
     //initial
-    constructor (address _owner, address _tokenAddress) Ownable(_owner){
+    constructor (address _owner, address _tokenAddress, uint256 startDate, uint256 endDate, uint256 tgeStart, uint256 tgeEnd, uint256 tgeReleaseRate) Ownable(_owner){
         token = IERC20(_tokenAddress);
         isPaused = false;
+        claimStartDate = startDate;
+        claimEndDate = endDate;
+        tgeStartDate = tgeStart;
+        tgeStartDate = tgeEnd;
+        releasedRate = tgeReleaseRate;
     }
 
     
     // ============== Actual functionalities ============== 
 
     function getTGETokens() public  checkIfIsPuased tgeDateController claimDateController nonReentrant{
-
-    // function getTGETokens() public  nonReentrant returns(uint256){
 
         //the cliam event start and not ended
         //TGE started, and not ended
@@ -154,19 +157,18 @@ contract GPTSaleAllocation is Ownable, ReentrancyGuard {
         uint256 currentTime = getCurrentTime();
         uint256 totalClaimEventDays = getTotalClaimEventDays();
 
-        // Adjusted daily rate calculation to minimize rounding errors
-        // First, multiply the remaining allocation by the daily rate, then divide by 100
-        uint256 dailyRate = users[msg.sender].remainedAllocation / totalClaimEventDays; 
 
-        require(dailyRate > 0, "Daily claim amount must be greater than 0");
+        uint256 claimAmount = users[msg.sender].remainedAllocation / totalClaimEventDays; 
+
+        require(claimAmount > 0, "Daily claim amount must be greater than 0");
 
         // Transfer the calculated amount to the user
-        require(token.transfer(msg.sender, dailyRate), "An error occurred");
+        require(token.transfer(msg.sender, claimAmount), "An error occurred");
 
         // Update user's claim records
-        users[msg.sender].claimedTokens += dailyRate;
+        users[msg.sender].claimedTokens += claimAmount;
         users[msg.sender].lastClaimTime = currentTime;
-        users[msg.sender].remainedAllocation -= dailyRate;
+        users[msg.sender].remainedAllocation -= claimAmount;
     }
 
 
@@ -257,8 +259,6 @@ contract GPTSaleAllocation is Ownable, ReentrancyGuard {
             user.remainedAllocation);
     }
 
-
-
     function getUserTGEAvailableAmount() public view returns(uint256){
 
         //Calculate the amount that would be given to the user in TGE
@@ -268,8 +268,10 @@ contract GPTSaleAllocation is Ownable, ReentrancyGuard {
     }
 
     function getUseDailyAmount() public view returns(uint256){
+
+        uint256 totalClaimEventDays = getTotalClaimEventDays();
         uint256 dailyAmount = users[msg.sender].remainedAllocation / totalClaimEventDays; 
-        return dailyAmount
+        return dailyAmount;
     }
 
     function getCurrentTime() public view returns(uint256){
@@ -306,9 +308,5 @@ contract GPTSaleAllocation is Ownable, ReentrancyGuard {
          uint256 totalDaysOftheClaimEvent = (claimEndDate - claimStartDate) / 86400;
         return  totalDaysOftheClaimEvent;
     }
-
-
-    
-    
 
 }   
