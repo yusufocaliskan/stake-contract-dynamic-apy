@@ -34,7 +34,7 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
     uint256 _stakeEndDate; 
     uint256 _stakeStartDate;
 
-    //How many days you want to allow the user stake
+    //How many days you want to allow the user to stake
     uint256 _stakeDays;
 
     //Total stakes
@@ -115,21 +115,7 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
 
     }
 
-    function GPTVerseStakingInitializer(
-        address initialOwner,
-        address tokenAddress_,
-        uint256 apyRate_,
-        uint256 minStakingAmount_,
-        uint256 maxStakingLimit_,
-        uint256 stakeStartDate_,
-        uint256 stakeEndDate_,
-        uint256 stakeDays_,
-        uint256 earlyUnStakeFeePercentage_
 
-    ) public virtual onlyInitializing{
-
-                
-    }
 
     //================== GETTERS ========================
 
@@ -144,6 +130,7 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
     function getStakeStartDate() external view returns(uint256){
         return _stakeStartDate;
     }
+
 
     function getStakeEndDate() external view returns(uint256){
         return _stakeEndDate;
@@ -196,7 +183,7 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
 
      
     //================== SETTERS ========================
-    // ---- those functions that could be used by the owner ----
+    // ---- those functions  that could be used by the owner ----
 
 
     function setMinStakingAmount(uint256 newMinStakingAmount) external onlyOwner {
