@@ -18,6 +18,7 @@ contract GPTVPrivateSaleClaim is Ownable, ReentrancyGuard {
     mapping(address => uint256) public allocations;
     mapping(address => uint256) public claimed;
     mapping(address => uint256) public lastClaimDate;
+
     uint256 public allocatedAmount;
 
 
