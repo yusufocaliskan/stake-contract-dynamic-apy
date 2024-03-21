@@ -67,9 +67,9 @@ contract VestingSchedule is ReentrancyGuard, Ownable  {
     function addVestingSchedule(address account, uint allocation, uint vestingSeconds, uint cliffSeconds, string memory eventId) external onlyOwner {
 
         //check if the given event id is exists
-        require(_events[id].length > 0, "The event is not exists, create new one if you wish.");
+        require(_events[eventId].length > 0, "The event is not exists, create new one if you wish.");
 
-        require(_vestingSchedules[id][account].account==address(0x0), "ERROR: Vesting Schedule already exists" );
+        require(_vestingSchedules[eventId][account].account==address(0x0), "ERROR: Vesting Schedule already exists" );
 
         require(cliffSeconds <= vestingSeconds, "ERROR: Cliff longer than Vesting Time");
 
@@ -78,7 +78,7 @@ contract VestingSchedule is ReentrancyGuard, Ownable  {
         require(vestingSeconds > 0, "ERROR: Vesting Time cannot be 0 seconds");
 
         _totalAllocation += allocation;
-        _vestingSchedules[id][account] = VestingScheduleStruct({
+        _vestingSchedules[eventId][account] = VestingScheduleStruct({
             account: account, 
             allocation : allocation, 
             startTimestamp: block.timestamp, 
@@ -139,21 +139,19 @@ contract VestingSchedule is ReentrancyGuard, Ownable  {
     }
 
     ///// by vesting definition /////
-    function getVestingSchedule( string memory eventId) external view returns (VestingScheduleStruct memory) {
+    function getVestingSchedule( string memory eventId, address account) external view returns (VestingScheduleStruct memory) {
 
-        address account = msg.sender;
         return _vestingSchedules[eventId][account];
     }
 
-    function getVestingMaturationTimestamp( string memory eventId) public view returns (uint) {
+    function getVestingMaturationTimestamp( string memory eventId, address account) public view returns (uint) {
 
-        address account = msg.sender;
         return _vestingSchedules[eventId][account].startTimestamp + _vestingSchedules[eventId][account].vestingSeconds;
     }
 
     function getElapsedVestingTime( string memory eventId, address account) public view returns (uint) {
 
-        if(block.timestamp > getVestingMaturationTimestamp(eventId)){
+        if(block.timestamp > getVestingMaturationTimestamp(eventId, account)){
             return _vestingSchedules[eventId][account].vestingSeconds;
         }
         return block.timestamp - _vestingSchedules[eventId][account].startTimestamp;
