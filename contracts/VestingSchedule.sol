@@ -13,6 +13,14 @@ contract VestingSchedule is ReentrancyGuard, Ownable  {
     event VestingScheduleCanceled(address account);
     event AllocationClaimed(address account, uint amount, uint timestamp);
 
+    struct EventLookup {
+        string eventName;
+        string eventId;
+    }
+    
+    mapping(string => EventLookup[])  _events;
+    string[] private _allEventIds;
+
 
     struct VestingScheduleStruct {
         address account;
@@ -23,7 +31,7 @@ contract VestingSchedule is ReentrancyGuard, Ownable  {
         uint claimedAmount;
     }
 
-    mapping( uint => mapping (address => VestingScheduleStruct) ) private _vestingSchedules;
+    mapping( string => mapping ( address => VestingScheduleStruct) ) private _vestingSchedules;
 
 
 
@@ -39,7 +47,27 @@ contract VestingSchedule is ReentrancyGuard, Ownable  {
 
     // FUNCTIONS
 
-    function addVestingSchedule(address account, uint allocation, uint vestingSeconds, uint cliffSeconds, uint id) external onlyOwner {
+    //Creates new id
+     function createNewEvent(string memory eventName, string memory eventId) public onlyOwner {
+        _events[eventId].push(EventLookup(eventName, eventId));
+        _allEventIds.push(eventId);
+    }
+
+    //Gets events detail by event id
+    function getEventById(string memory key) public view returns (EventLookup[] memory) {
+        return _events[key];
+    }
+
+
+    //Retuns create events
+    function getAllEventIds() public view returns (string[] memory) {
+        return _allEventIds;
+    }
+
+    function addVestingSchedule(address account, uint allocation, uint vestingSeconds, uint cliffSeconds, string memory id) external onlyOwner {
+
+        //check if the given event id is exists
+        require(_events[id].length > 0, "The event is not exists, create new one if you wish.");
 
         require(_vestingSchedules[id][account].account==address(0x0), "ERROR: Vesting Schedule already exists" );
 
@@ -66,24 +94,24 @@ contract VestingSchedule is ReentrancyGuard, Ownable  {
       //  return _claim(_msgSender());
     //}
 
-    function claim( uint id) public  nonReentrant {
+    function claim( string memory eventId) public  nonReentrant {
         address account = msg.sender;
-        uint amount = getClaimableAmount(account, id);
+        uint amount = getClaimableAmount(eventId);
 
         _token.transfer(account, amount);
         
-        _vestingSchedules[id][account].claimedAmount += amount;
+        _vestingSchedules[eventId][account].claimedAmount += amount;
         _totalClaimedAllocation += amount;
 
         emit AllocationClaimed(account, amount, block.timestamp);
     }
 
-    function cancel(address account, uint id) external onlyOwner {
+    function cancel(address account, string memory eventId) external onlyOwner {
 
-        uint unvestedAllocation = getUnvestedAmount(account, id);
+        uint unvestedAllocation = getUnvestedAmount( eventId);
 
-        _vestingSchedules[id][account].allocation = _vestingSchedules[id][account].allocation - unvestedAllocation;
-        _vestingSchedules[id][account].vestingSeconds = getElapsedVestingTime(account, id);
+        _vestingSchedules[eventId][account].allocation = _vestingSchedules[eventId][account].allocation - unvestedAllocation;
+        _vestingSchedules[eventId][account].vestingSeconds = getElapsedVestingTime( eventId);
 
         _totalAllocation -= unvestedAllocation;
 
@@ -110,49 +138,49 @@ contract VestingSchedule is ReentrancyGuard, Ownable  {
     }
 
     ///// by vesting definition /////
-    function getVestingSchedule( uint id) external view returns (VestingScheduleStruct memory) {
+    function getVestingSchedule( string memory eventId) external view returns (VestingScheduleStruct memory) {
 
         address account = msg.sender;
-        return _vestingSchedules[id][account];
+        return _vestingSchedules[eventId][account];
     }
 
-    function getVestingMaturationTimestamp( uint id) public view returns (uint) {
+    function getVestingMaturationTimestamp( string memory eventId) public view returns (uint) {
 
         address account = msg.sender;
-        return _vestingSchedules[id][account].startTimestamp + _vestingSchedules[id][account].vestingSeconds;
+        return _vestingSchedules[eventId][account].startTimestamp + _vestingSchedules[eventId][account].vestingSeconds;
     }
 
-    function getElapsedVestingTime( uint id) public view returns (uint) {
+    function getElapsedVestingTime( string memory eventId) public view returns (uint) {
 
         address account = msg.sender;
-        if(block.timestamp > getVestingMaturationTimestamp(account, id)){
-            return _vestingSchedules[id][account].vestingSeconds;
+        if(block.timestamp > getVestingMaturationTimestamp(eventId)){
+            return _vestingSchedules[eventId][account].vestingSeconds;
         }
-        return block.timestamp - _vestingSchedules[id][account].startTimestamp;
+        return block.timestamp - _vestingSchedules[eventId][account].startTimestamp;
     }
 
-    function getVestedAmount( uint id) public view returns (uint) {
+    function getVestedAmount( string memory eventId) public view returns (uint) {
 
         address account = msg.sender;
-        return _vestingSchedules[id][account].allocation * getElapsedVestingTime(account, id) / _vestingSchedules[id][account].vestingSeconds;
+        return _vestingSchedules[eventId][account].allocation * getElapsedVestingTime(eventId) / _vestingSchedules[eventId][account].vestingSeconds;
     }
 
-    function getUnvestedAmount( uint id) public view returns (uint) {
+    function getUnvestedAmount( string memory eventId) public view returns (uint) {
 
         address account = msg.sender;
-        return _vestingSchedules[id][account].allocation - getVestedAmount(account, id);
+        return _vestingSchedules[eventId][account].allocation - getVestedAmount( eventId);
     }
 
-    function getClaimableAmount( uint id) public view returns (uint) {
+    function getClaimableAmount( string memory eventId) public view returns (uint) {
 
         address account = msg.sender;
         //If it's earlier than the cliff, zero allocation is claimable.
-        if(block.timestamp < (_vestingSchedules[id][account].startTimestamp + _vestingSchedules[id][account].cliffSeconds ) ){
+        if(block.timestamp < (_vestingSchedules[eventId][account].startTimestamp + _vestingSchedules[eventId][account].cliffSeconds ) ){
             return 0;
         }
 
         //Claimable amount is the vested, unclaimed amount.
-        return getVestedAmount(account, id) - _vestingSchedules[id][account].claimedAmount;
+        return getVestedAmount(eventId) - _vestingSchedules[eventId][account].claimedAmount;
     }
 
 }
