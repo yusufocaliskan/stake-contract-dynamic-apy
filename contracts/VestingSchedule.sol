@@ -49,6 +49,10 @@ contract VestingSchedule is ReentrancyGuard, Ownable  {
 
     //Creates new id
      function createNewEvent(string memory eventName, string memory eventId) public onlyOwner {
+        if(_events[eventId].length > 0){
+            revert("The event already exists.");
+        }
+        
         _events[eventId].push(EventLookup(eventName, eventId));
         _allEventIds.push(eventId);
     }
