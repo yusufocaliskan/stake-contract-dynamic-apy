@@ -15,12 +15,16 @@ contract VestingSchedule is ReentrancyGuard, Ownable, AccessControl {
     event VestingScheduleCanceled(address account);
     event AllocationClaimed(address account, uint amount, uint timestamp);
 
+    
     struct EventLookup {
         string eventName;
         string eventId;
+        uint tgeRate;
     }
     
-    mapping(string => EventLookup[])  _events;
+
+    mapping(string => EventLookup) private _events;
+    
     string[] private _allEventIds;
 
 
@@ -31,6 +35,7 @@ contract VestingSchedule is ReentrancyGuard, Ownable, AccessControl {
         uint vestingSeconds;
         uint cliffSeconds;
         uint claimedAmount;
+        bool isClaimInTGE;
     }
 
     mapping( string => mapping ( address => VestingScheduleStruct) ) private _vestingSchedules;
@@ -56,30 +61,37 @@ contract VestingSchedule is ReentrancyGuard, Ownable, AccessControl {
     // FUNCTIONS
 
     //Creates new id
-     function createNewEvent(string memory eventName, string memory eventId) public onlyOwner {
-        if(_events[eventId].length > 0){
+     function createNewEvent(string memory eventName, string memory eventId, uint tgeRate) public onlyOwner {
+        if(_events[eventId].tgeRate > 0){
             revert("The event already exists.");
         }
         
-        _events[eventId].push(EventLookup(eventName, eventId));
+        _events[eventId] = EventLookup(eventName, eventId, tgeRate);
         _allEventIds.push(eventId);
     }
 
     //Gets events detail by event id
-    function getEventById(string memory key) public view returns (EventLookup[] memory) {
+    function getEventById(string memory key) public view returns (EventLookup memory) {
         return _events[key];
     }
 
 
-    //Retuns create events
-    function getAllEventIds() public view returns (string[] memory) {
-        return _allEventIds;
+    function getAllEvents() public view returns (EventLookup[] memory) {
+        EventLookup[] memory allEvents = new EventLookup[](_allEventIds.length);
+        
+        for (uint i = 0; i < _allEventIds.length; i++) {
+            // Access the event details from the mapping using eventId
+            EventLookup storage eventLookup = _events[_allEventIds[i]];
+            allEvents[i] = eventLookup;
+        }
+        
+        return allEvents;
     }
 
     function addVestingSchedule(address account, uint allocation, uint vestingSeconds, uint cliffSeconds, string memory eventId) external onlyRole(OWNER_ROLE) {
 
         //check if the given event id is exists
-        require(_events[eventId].length > 0, "The event is not exists, create new one if you wish.");
+        require(_events[eventId].tgeRate > 0, "The event is not exists, create new one if you wish.");
 
         require(_vestingSchedules[eventId][account].account==address(0x0), "ERROR: Vesting Schedule already exists" );
 
@@ -96,7 +108,8 @@ contract VestingSchedule is ReentrancyGuard, Ownable, AccessControl {
             startTimestamp: block.timestamp, 
             vestingSeconds: vestingSeconds, 
             cliffSeconds: cliffSeconds,
-            claimedAmount: 0
+            claimedAmount: 0,
+            isClaimInTGE: false
         });
 
         emit VestingScheduleAdded(account, allocation, block.timestamp, vestingSeconds, cliffSeconds);
@@ -104,8 +117,20 @@ contract VestingSchedule is ReentrancyGuard, Ownable, AccessControl {
     
 
     function claim( string memory eventId, address account) public  nonReentrant {
-        
+
+
         uint amount = getClaimableAmount(eventId, account);
+        uint tgeRate = _events[eventId].tgeRate; 
+        
+        if(!_vestingSchedules[eventId][account].isClaimInTGE)
+        {
+            //Calculate TgE Amount 
+            uint tgeAmount = _vestingSchedules[eventId][account].allocation * tgeRate / 100; 
+            amount +=tgeAmount;
+            _vestingSchedules[eventId][account].isClaimInTGE = true;
+        }
+
+        
         require(amount > 0, "No token to be claim.");
         
         _token.transfer(account, amount);
