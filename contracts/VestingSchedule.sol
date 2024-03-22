@@ -4,10 +4,12 @@ pragma solidity ^0.8.12;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/access/AccessControl.sol";
 
-contract VestingSchedule is ReentrancyGuard, Ownable  {
 
-    // bytes32 public constant OWNER_ROLE = keccak256("OWNER_ROLE");
+contract VestingSchedule is ReentrancyGuard, Ownable, AccessControl {
+
+    bytes32 public constant OWNER_ROLE = keccak256("OWNER_ROLE");
 
     event VestingScheduleAdded(address account, uint allocation, uint timestamp, uint vestingSeconds, uint cliffSeconds);
     event VestingScheduleCanceled(address account);
@@ -33,9 +35,6 @@ contract VestingSchedule is ReentrancyGuard, Ownable  {
 
     mapping( string => mapping ( address => VestingScheduleStruct) ) private _vestingSchedules;
 
-
-
-
     IERC20 private _token;
 
     uint private _totalAllocation;
@@ -43,6 +42,15 @@ contract VestingSchedule is ReentrancyGuard, Ownable  {
 
     constructor ( address ownerAddress, address tokenAddress ) Ownable(ownerAddress) {
         _token = IERC20(tokenAddress);
+
+        //Owener permissons
+        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+
+
+        //grant it to owen_role
+        _grantRole(OWNER_ROLE, ownerAddress);
+
+
     }
 
     // FUNCTIONS
@@ -68,7 +76,7 @@ contract VestingSchedule is ReentrancyGuard, Ownable  {
         return _allEventIds;
     }
 
-    function addVestingSchedule(address account, uint allocation, uint vestingSeconds, uint cliffSeconds, string memory eventId) external onlyOwner {
+    function addVestingSchedule(address account, uint allocation, uint vestingSeconds, uint cliffSeconds, string memory eventId) external onlyRole(OWNER_ROLE) {
 
         //check if the given event id is exists
         require(_events[eventId].length > 0, "The event is not exists, create new one if you wish.");
@@ -94,9 +102,6 @@ contract VestingSchedule is ReentrancyGuard, Ownable  {
         emit VestingScheduleAdded(account, allocation, block.timestamp, vestingSeconds, cliffSeconds);
     }
     
-    //function claim() external  {
-      //  return _claim(_msgSender());
-    //}
 
     function claim( string memory eventId, address account) public  nonReentrant {
         
@@ -122,7 +127,6 @@ contract VestingSchedule is ReentrancyGuard, Ownable  {
 
         emit VestingScheduleCanceled(account);
     }
-
     // GETTERS
 
     ///// global /////
@@ -162,7 +166,6 @@ contract VestingSchedule is ReentrancyGuard, Ownable  {
     }
 
     function getVestedAmount( string memory eventId, address account) public view returns (uint) {
-
         
         return _vestingSchedules[eventId][account].allocation * getElapsedVestingTime(eventId, account) / _vestingSchedules[eventId][account].vestingSeconds;
     }
