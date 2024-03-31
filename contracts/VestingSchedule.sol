@@ -6,22 +6,33 @@ import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 
+//swap
+import "@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol";
+import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
+
+import "hardhat/console.sol";
+
 
 contract VestingSchedule is ReentrancyGuard, Ownable, AccessControl {
 
     bytes32 public constant OWNER_ROLE = keccak256("OWNER_ROLE");
 
     event VestingScheduleAdded(address account, uint allocation, uint timestamp, uint vestingSeconds, uint cliffSeconds);
-    event VestingScheduleCanceled(address account);
-    event AllocationClaimed(address account, uint amount, uint timestamp);
 
+    event VestingScheduleCanceled(address account);
+
+    event AllocationClaimed(address account, uint amount, uint timestamp);
     
     struct EventLookup {
         string eventName;
         string eventId;
         uint tgeRate;
+
+        uint startTimestamp;
+        uint vestingSeconds;
+        uint cliffSeconds;
+
     }
-    
 
     mapping(string => EventLookup) private _events;
     
@@ -45,14 +56,33 @@ contract VestingSchedule is ReentrancyGuard, Ownable, AccessControl {
     uint private _totalAllocation;
     uint private _totalClaimedAllocation;
 
-    constructor ( address ownerAddress, address tokenAddress ) Ownable(ownerAddress) {
+    //swap
+    ISwapRouter public constant swapRouter = ISwapRouter(0xE592427A0AEce92De3Edee1F18E0157C05861564);
+        
+
+    // address public constant GPTV = 0x1F56eFffEe38EEeAE36cD38225b66c56E4D095a7; 
+    // address public constant USDT = 0xdAC17F958D2ee523a2206206994597C13D831ec7; 
+    // address public constant USDC = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48; 
+
+    address public constant DAI = 0x6B175474E89094C44Da98b954EedeAC495271d0F;
+    address public constant WETH9 = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
+    address public constant USDC = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
+
+    address public constant GPTV = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
+
+    uint _gptvRate;
+
+
+
+    constructor ( address ownerAddress, address tokenAddress, uint gptvRate ) Ownable(ownerAddress) {
         _token = IERC20(tokenAddress);
+
+        _gptvRate = gptvRate;
 
         //Owener permissons
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
 
-
-        //grant it to owen_role
+        //grant it to owner_role
         _grantRole(OWNER_ROLE, ownerAddress);
 
 
@@ -60,21 +90,27 @@ contract VestingSchedule is ReentrancyGuard, Ownable, AccessControl {
 
     // FUNCTIONS
 
-    //Creates new id
-     function createNewEvent(string memory eventName, string memory eventId, uint tgeRate) public onlyOwner {
+    //Creates new event 
+     function createNewEvent(string memory eventName, string memory eventId, 
+     uint tgeRate, uint vestingSeconds, uint cliffSeconds) public onlyOwner {
         if(_events[eventId].tgeRate > 0){
             revert("The event already exists.");
         }
-        
-        _events[eventId] = EventLookup(eventName, eventId, tgeRate);
+
+        uint startTimestamp =  block.timestamp;
+        _events[eventId] = EventLookup(eventName, 
+                            eventId, 
+                            tgeRate, 
+                            startTimestamp,
+                            vestingSeconds, 
+                            cliffSeconds);
         _allEventIds.push(eventId);
     }
 
     //Gets events detail by event id
-    function getEventById(string memory key) public view returns (EventLookup memory) {
-        return _events[key];
+    function getEventById(string memory eventId) public view returns (EventLookup memory) {
+        return _events[eventId];
     }
-
 
     function getAllEvents() public view returns (EventLookup[] memory) {
         EventLookup[] memory allEvents = new EventLookup[](_allEventIds.length);
@@ -88,16 +124,27 @@ contract VestingSchedule is ReentrancyGuard, Ownable, AccessControl {
         return allEvents;
     }
 
-    function addVestingSchedule(address account, uint allocation, uint vestingSeconds, uint cliffSeconds, string memory eventId) external onlyRole(OWNER_ROLE) {
+    
+    function addVestingSchedule(address account, uint allocation, string memory eventId, uint vestingSeconds, uint cliffSeconds) internal  {
 
         //check if the given event id is exists
         require(_events[eventId].tgeRate > 0, "The event is not exists, create new one if you wish.");
 
+        //if use events timing
+        if(vestingSeconds == 0){
+            vestingSeconds = _events[eventId].vestingSeconds;
+        }
+
+        if(cliffSeconds == 0){
+            cliffSeconds = _events[eventId].cliffSeconds;
+        }
+        
+        
         require(_vestingSchedules[eventId][account].account==address(0x0), "ERROR: Vesting Schedule already exists" );
 
-        require(cliffSeconds <= vestingSeconds, "ERROR: Cliff longer than Vesting Time");
-
         require(_totalAllocation + allocation <= _token.balanceOf(address(this)), "ERROR: Total allocation cannot be greater than reserves");
+
+        require(cliffSeconds <= vestingSeconds, "ERROR: Cliff longer than Vesting Time");
 
         require(vestingSeconds > 0, "ERROR: Vesting Time cannot be 0 seconds");
 
@@ -114,44 +161,85 @@ contract VestingSchedule is ReentrancyGuard, Ownable, AccessControl {
 
         emit VestingScheduleAdded(account, allocation, block.timestamp, vestingSeconds, cliffSeconds);
     }
+ 
+    // just to use without swapping
+    function addPrivateVestingSchedule(address account, uint allocation, string memory eventId, uint vestingSeconds, uint cliffSeconds) public onlyRole(OWNER_ROLE) {
+
+        addVestingSchedule(account, allocation, eventId, vestingSeconds, cliffSeconds);
+    }
     
 
     function claim( string memory eventId, address account) public  nonReentrant {
 
+        
+        if(_vestingSchedules[eventId][account].account == address(0x0)){
+            revert("Vesting schedule does not exist for this account.");
+        }
 
         uint amount = getClaimableAmount(eventId, account);
         uint tgeRate = _events[eventId].tgeRate; 
-        
-        if(!_vestingSchedules[eventId][account].isClaimInTGE)
+
+         console.log(
+            "Getting Claimable Amoount --> Event: %s, Amount :%s, ",
+            eventId,
+            amount);
+
+       
+        if((amount != _vestingSchedules[eventId][account].allocation ) && !_vestingSchedules[eventId][account].isClaimInTGE)
         {
             //Calculate TgE Amount 
-            uint tgeAmount = _vestingSchedules[eventId][account].allocation * tgeRate / 100; 
+            uint tgeAmount = safeMulDiv(_vestingSchedules[eventId][account].allocation, tgeRate, 100);
+ 
             amount +=tgeAmount;
             _vestingSchedules[eventId][account].isClaimInTGE = true;
+
+        console.log(
+            "Calculatig TGE --> Event: %s, Amount :%s, ",
+            eventId,
+            amount);
         }
 
         
-        require(amount > 0, "No token to be claim.");
+
         
+        require(amount > 0, "No token to be claim.");
+         console.log("Start to transfer ");       
         _token.transfer(account, amount);
         
         _vestingSchedules[eventId][account].claimedAmount += amount;
         _totalClaimedAllocation += amount;
 
+        console.log(
+            "Transfer is Done. Result --> Event: %s, Amount :%s, Address :%s",
+            eventId,
+            amount,
+            account);
+
+
+
         emit AllocationClaimed(account, amount, block.timestamp);
     }
-
-    function cancel(address account, string memory eventId) external onlyOwner {
-
-        uint unvestedAllocation = getUnvestedAmount( eventId, account);
-
-        _vestingSchedules[eventId][account].allocation = _vestingSchedules[eventId][account].allocation - unvestedAllocation;
-        _vestingSchedules[eventId][account].vestingSeconds = getElapsedVestingTime( eventId, account);
-
-        _totalAllocation -= unvestedAllocation;
-
-        emit VestingScheduleCanceled(account);
+    function safeMulDiv(uint256 a, uint256 b, uint256 div) private pure returns (uint256) {
+        return (a / div) * b + (a % div) * b / div;
     }
+
+
+    function setGPTVRate(uint rate) public onlyOwner(){
+        _gptvRate = rate;
+    }  
+
+   // function cancel(address account, string memory eventId) external onlyOwner {
+
+     //   uint unvestedAllocation = getUnvestedAmount( eventId, account);
+
+       // _vestingSchedules[eventId][account].allocation = _vestingSchedules[eventId][account].allocation - unvestedAllocation;
+       // _vestingSchedules[eventId][account].vestingSeconds = getElapsedVestingTime( eventId, account);
+
+        //_totalAllocation -= unvestedAllocation;
+
+        //emit VestingScheduleCanceled(account);
+    // }
+
     // GETTERS
 
     ///// global /////
@@ -179,37 +267,124 @@ contract VestingSchedule is ReentrancyGuard, Ownable, AccessControl {
 
     function getVestingMaturationTimestamp( string memory eventId, address account) public view returns (uint) {
 
-        return _vestingSchedules[eventId][account].startTimestamp + _vestingSchedules[eventId][account].vestingSeconds;
+        return getStartTimestamp(account, eventId) + getVestingSeconds(account, eventId);
     }
 
     function getElapsedVestingTime( string memory eventId, address account) public view returns (uint) {
 
         if(block.timestamp > getVestingMaturationTimestamp(eventId, account)){
-            return _vestingSchedules[eventId][account].vestingSeconds;
+            return getVestingSeconds(account, eventId);
         }
-        return block.timestamp - _vestingSchedules[eventId][account].startTimestamp;
+        return block.timestamp - getStartTimestamp(account, eventId);
     }
 
-    function getVestedAmount( string memory eventId, address account) public view returns (uint) {
-        
-        return _vestingSchedules[eventId][account].allocation * getElapsedVestingTime(eventId, account) / _vestingSchedules[eventId][account].vestingSeconds;
-    }
-
-    function getUnvestedAmount( string memory eventId, address account) public view returns (uint) {
-
-        return _vestingSchedules[eventId][account].allocation - getVestedAmount( eventId, account);
-    }
-
-    function getClaimableAmount( string memory eventId, address account) public view returns (uint) {
-
-        
-        //If it's earlier than the cliff, zero allocation is claimable.
-        if(block.timestamp < (_vestingSchedules[eventId][account].startTimestamp + _vestingSchedules[eventId][account].cliffSeconds ) ){
+    function getVestedAmount(string memory eventId, address account) public view returns (uint) {
+        uint vestingSeconds = getVestingSeconds(account, eventId);
+        if (vestingSeconds == 0) {
             return 0;
         }
 
-        //Claimable amount is the vested, unclaimed amount.
-        return getVestedAmount(eventId, account) - _vestingSchedules[eventId][account].claimedAmount;
+        uint startTimestamp = getStartTimestamp(account, eventId);
+        uint elapsedVestingTime = block.timestamp > startTimestamp + vestingSeconds
+                                ? vestingSeconds
+                                : block.timestamp - startTimestamp;
+        uint totalAllocation = _vestingSchedules[eventId][account].allocation;
+
+        return (totalAllocation * elapsedVestingTime / vestingSeconds);
     }
 
+    function getUnvestedAmount(string memory eventId, address account) public view returns (uint) {
+        uint vestedAmount = getVestedAmount(eventId, account);
+        uint allocation = _vestingSchedules[eventId][account].allocation;
+
+        if (allocation >= vestedAmount) {
+            return allocation - vestedAmount;
+        } 
+        // This means all tokens have been vested
+        return 0;
+    }
+
+    function getClaimableAmount(string memory eventId, address account) public view returns (uint) {
+        if (block.timestamp < (getStartTimestamp(account, eventId) + getCliffSeconds(account, eventId))) {
+            return 0;
+        }
+
+        uint vestedAmount = getVestedAmount(eventId, account);
+        uint claimedAmount = _vestingSchedules[eventId][account].claimedAmount;
+
+        if (vestedAmount >= claimedAmount) {
+            return vestedAmount - claimedAmount;
+        } 
+        // This should not normally happen, as claimed amount should never exceed vested amount
+        return 0;
+    }
+
+
+    function getStartTimestamp(address account, string memory eventId) private view returns(uint){
+        uint accounStartTimestamp = _vestingSchedules[eventId][account].startTimestamp;
+
+        //Use events time stamp, if account has not one
+        if(accounStartTimestamp == 0){
+            return _events[eventId].startTimestamp;
+        }
+
+        return accounStartTimestamp;
+    }
+
+    function getVestingSeconds(address account, string memory eventId) private view returns(uint){
+        uint accountVestingSecs = _vestingSchedules[eventId][account].vestingSeconds;
+
+        if(accountVestingSecs == 0){
+            return _events[eventId].vestingSeconds;
+        }
+
+        return accountVestingSecs;
+    }
+
+    function getCliffSeconds(address account, string memory eventId) private view returns(uint){
+        uint accountCliffSecs = _vestingSchedules[eventId][account].cliffSeconds;
+        
+        if(accountCliffSecs == 0){
+            return _events[eventId].cliffSeconds;
+        }
+
+        return accountCliffSecs;
+    }
+
+    //Swap 
+    function swapExactInputSingle(address tokenIn, address tokenOut, uint amountIn, string memory eventId) external nonReentrant returns(uint amountOut){
+
+
+        // Get the transfer form user
+        TransferHelper.safeTransferFrom(tokenIn, msg.sender, address(this), amountIn);
+
+        // approve for token 
+        TransferHelper.safeApprove(tokenIn, address(swapRouter), amountIn);
+        
+        // Swap params 
+        ISwapRouter.ExactInputSingleParams memory params = ISwapRouter.ExactInputSingleParams({
+            tokenIn: tokenIn,
+            tokenOut: tokenOut,
+            fee: 3000,
+            recipient: address(this),
+            // recipient: msg.sender,
+            deadline: block.timestamp +1000,
+            amountIn: amountIn,
+            amountOutMinimum: 0,
+            sqrtPriceLimitX96: 0
+        });
+
+        // Swap yap ve GPTV token miktarını al
+        amountOut = swapRouter.exactInputSingle(params);
+        console.log(
+            "Swapiing --> Event: %s, AmountIn :%s, AmountOut :%s",
+            eventId,
+            amountIn,
+            amountOut);
+
+
+        addVestingSchedule(msg.sender, amountOut, eventId, 0, 0);
+        return amountOut;
+
+    }
 }

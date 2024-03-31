@@ -26,6 +26,9 @@
     "typechain": "^8.3.0"
   },
   "dependencies": {
-    "@openzeppelin/contracts": "^5.0.2"
+    "@openzeppelin/contracts": "^5.0.2",
+    "@uniswap/v3-periphery": "^1.4.4",
+    "ether": "^0.0.9",
+    "web3modal": "^1.9.12"
   }
 }

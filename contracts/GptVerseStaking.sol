@@ -207,7 +207,7 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
     // }
 
     function stake4User(uint256 amount, address userAddress) external onlyOwner nonReentrant{
-        stakeToken( userAddress, amount);
+        this.stakeToken( userAddress, amount);
     }
 
 
@@ -243,7 +243,7 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
 
     //Transfering the amoun to the msg.sender
     function widthdraw(uint256 amount ) external onlyOwner nonReentrant{
-        require(getWithdrawableAmountOfContract() >= amount,"TStaking --> not enough withdrawble tokens");
+        require(this.getWithdrawableAmountOfContract() >= amount,"TStaking --> not enough withdrawble tokens");
 
         IERC20(_tokenAddress).transfer(msg.sender, amount);
     }
@@ -296,7 +296,7 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
 
         address user = msg.sender;
         require(_amount != 0, "Amount should be non-zero");
-        bool chekIsUserAHolder = isUserAStakeHoler(user);
+        bool chekIsUserAHolder = this.isUserAStakeHoler(user);
         require(chekIsUserAHolder, "You are not a stakeholder.");
         require(_users[user].stakeAmount >= _amount, "Not enough stake to unstake.");
 
