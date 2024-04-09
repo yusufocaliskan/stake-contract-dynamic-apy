@@ -185,7 +185,7 @@ contract VestingSchedule is ReentrancyGuard, Ownable, AccessControl {
             amount);
 
        
-        if((amount != _vestingSchedules[eventId][account].allocation ) && !_vestingSchedules[eventId][account].isClaimInTGE)
+        if((amount != _vestingSchedules[eventId][account].allocation ) && _vestingSchedules[eventId][account].isClaimInTGE != true)
         {
             //Calculate TgE Amount 
             uint tgeAmount = safeMulDiv(_vestingSchedules[eventId][account].allocation, tgeRate, 100);
@@ -219,6 +219,7 @@ contract VestingSchedule is ReentrancyGuard, Ownable, AccessControl {
 
         emit AllocationClaimed(account, amount, block.timestamp);
     }
+
     function safeMulDiv(uint256 a, uint256 b, uint256 div) private pure returns (uint256) {
         return (a / div) * b + (a % div) * b / div;
     }
@@ -227,6 +228,8 @@ contract VestingSchedule is ReentrancyGuard, Ownable, AccessControl {
     function setGPTVRate(uint rate) public onlyOwner(){
         _gptvRate = rate;
     }  
+
+
 
    // function cancel(address account, string memory eventId) external onlyOwner {
 
@@ -306,6 +309,12 @@ contract VestingSchedule is ReentrancyGuard, Ownable, AccessControl {
 
     function getClaimableAmount(string memory eventId, address account) public view returns (uint) {
         if (block.timestamp < (getStartTimestamp(account, eventId) + getCliffSeconds(account, eventId))) {
+
+        console.log(
+            "getClaimableAmount #1",
+            block.timestamp < (getStartTimestamp(account, eventId) + getCliffSeconds(account, eventId)));
+
+
             return 0;
         }
 
@@ -313,8 +322,19 @@ contract VestingSchedule is ReentrancyGuard, Ownable, AccessControl {
         uint claimedAmount = _vestingSchedules[eventId][account].claimedAmount;
 
         if (vestedAmount >= claimedAmount) {
+
+            console.log(
+            "getClaimableAmount #2 -- vestedAmount - claimedAmount",
+            vestedAmount - claimedAmount);
+
+
             return vestedAmount - claimedAmount;
         } 
+            console.log(
+            "getClaimableAmount #3 -- vestedAmount - claimedAmount",
+            0);
+
+
         // This should not normally happen, as claimed amount should never exceed vested amount
         return 0;
     }
@@ -368,7 +388,7 @@ contract VestingSchedule is ReentrancyGuard, Ownable, AccessControl {
             fee: 3000,
             recipient: address(this),
             // recipient: msg.sender,
-            deadline: block.timestamp +1000,
+            deadline: block.timestamp + 1000,
             amountIn: amountIn,
             amountOutMinimum: 0,
             sqrtPriceLimitX96: 0
@@ -384,6 +404,7 @@ contract VestingSchedule is ReentrancyGuard, Ownable, AccessControl {
 
 
         addVestingSchedule(msg.sender, amountOut, eventId, 0, 0);
+
         return amountOut;
 
     }
