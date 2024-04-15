@@ -27,6 +27,7 @@
   },
   "dependencies": {
     "@openzeppelin/contracts": "^5.0.2",
+    "@pancakeswap/pancake-swap-lib": "^0.0.4",
     "@uniswap/v3-periphery": "^1.4.4",
     "ether": "^0.0.9",
     "web3modal": "^1.9.12"

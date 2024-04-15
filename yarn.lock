@@ -896,6 +896,11 @@
   resolved "https://registry.npmjs.org/@openzeppelin/contracts/-/contracts-3.4.2-solc-0.7.tgz"
   integrity sha512-W6QmqgkADuFcTLzHL8vVoNBtkwjvQRpYIAom7KiUNoLKghyx3FgH0GBjt8NRvigV1ZmMOBllvE1By1C+bi8WpA==
 
+"@pancakeswap/pancake-swap-lib@^0.0.4":
+  version "0.0.4"
+  resolved "https://registry.npmjs.org/@pancakeswap/pancake-swap-lib/-/pancake-swap-lib-0.0.4.tgz"
+  integrity sha512-efauTqrPQX0P2X159Z5YnAVNmD8jvFxei9iIbDU850MG7KuupfqNTfDoN2/dCMo2GomSFokG2MjW0GenZc4EFg==
+
 "@scure/base@~1.1.0", "@scure/base@~1.1.4":
   version "1.1.5"
   resolved "https://registry.npmjs.org/@scure/base/-/base-1.1.5.tgz"
