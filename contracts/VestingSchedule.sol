@@ -88,6 +88,10 @@ contract VestingSchedule is ReentrancyGuard, Ownable, AccessControl {
 
     }
 
+    function isOwner(address account) public view returns (bool) {
+        return account == owner();
+    }
+
     // FUNCTIONS
 
     //Creates new event 
@@ -177,7 +181,6 @@ contract VestingSchedule is ReentrancyGuard, Ownable, AccessControl {
         }
 
         uint amount = getClaimableAmount(eventId, account);
-        uint tgeRate = _events[eventId].tgeRate; 
 
          console.log(
             "Getting Claimable Amoount --> Event: %s, Amount :%s, ",
@@ -188,15 +191,15 @@ contract VestingSchedule is ReentrancyGuard, Ownable, AccessControl {
         if((amount != _vestingSchedules[eventId][account].allocation ) && _vestingSchedules[eventId][account].isClaimInTGE != true)
         {
             //Calculate TgE Amount 
-            uint tgeAmount = safeMulDiv(_vestingSchedules[eventId][account].allocation, tgeRate, 100);
+            uint tgeAmount = calculateTGEAmount(account, eventId); 
  
             amount +=tgeAmount;
             _vestingSchedules[eventId][account].isClaimInTGE = true;
 
-        console.log(
-            "Calculatig TGE --> Event: %s, Amount :%s, ",
-            eventId,
-            amount);
+            console.log(
+                "Calculatig TGE --> Event: %s, Amount :%s, ",
+                eventId,
+                amount);
         }
 
         
@@ -220,16 +223,23 @@ contract VestingSchedule is ReentrancyGuard, Ownable, AccessControl {
         emit AllocationClaimed(account, amount, block.timestamp);
     }
 
-    function safeMulDiv(uint256 a, uint256 b, uint256 div) private pure returns (uint256) {
-        return (a / div) * b + (a % div) * b / div;
+    function calculateTGEAmount(address account, string memory eventId) public view returns(uint){
+
+        uint tgeRate = _events[eventId].tgeRate; 
+        uint tgeAmount = calculateAmountPercentage(_vestingSchedules[eventId][account].allocation, tgeRate);
+
+        return tgeAmount;
+    }
+
+    function calculateAmountPercentage(uint _amount, uint _percentage) internal pure returns (uint) {
+        return (_amount * _percentage) / 100;
+
     }
 
 
     function setGPTVRate(uint rate) public onlyOwner(){
         _gptvRate = rate;
     }  
-
-
 
    // function cancel(address account, string memory eventId) external onlyOwner {
 
@@ -282,18 +292,32 @@ contract VestingSchedule is ReentrancyGuard, Ownable, AccessControl {
     }
 
     function getVestedAmount(string memory eventId, address account) public view returns (uint) {
+        console.log("Start Vested Amount");
         uint vestingSeconds = getVestingSeconds(account, eventId);
         if (vestingSeconds == 0) {
-            return 0;
+            return 0; // No vesting period defined
         }
 
-        uint startTimestamp = getStartTimestamp(account, eventId);
-        uint elapsedVestingTime = block.timestamp > startTimestamp + vestingSeconds
-                                ? vestingSeconds
-                                : block.timestamp - startTimestamp;
-        uint totalAllocation = _vestingSchedules[eventId][account].allocation;
+        console.log("Start Vested Amount, vestingSeconds", vestingSeconds);
 
-        return (totalAllocation * elapsedVestingTime / vestingSeconds);
+        uint startTimestamp = getStartTimestamp(account, eventId);
+        if (block.timestamp <= startTimestamp) {
+            return 0; // Vesting has not started yet
+        }
+        console.log("Start Vested Amount, startTimestamp", startTimestamp);
+
+        uint totalAllocation = _vestingSchedules[eventId][account].allocation;
+        if (block.timestamp >= startTimestamp + vestingSeconds) {
+            return totalAllocation; // Entire amount has vested
+        }
+
+        console.log("Start Vested Amount, totalAllocation", totalAllocation);
+
+        // Calculate elapsed time relative to the vesting duration
+        uint elapsedVestingTime = block.timestamp - startTimestamp;
+        uint result=  (totalAllocation * elapsedVestingTime) / vestingSeconds; 
+        console.log("Vested Amount", result);
+        return result;
     }
 
     function getUnvestedAmount(string memory eventId, address account) public view returns (uint) {
@@ -308,39 +332,32 @@ contract VestingSchedule is ReentrancyGuard, Ownable, AccessControl {
     }
 
     function getClaimableAmount(string memory eventId, address account) public view returns (uint) {
+
+        console.log("Claimed Amount Worked,", eventId, account);
         if (block.timestamp < (getStartTimestamp(account, eventId) + getCliffSeconds(account, eventId))) {
 
-        console.log(
-            "getClaimableAmount #1",
-            block.timestamp < (getStartTimestamp(account, eventId) + getCliffSeconds(account, eventId)));
-
-
+            console.log("Claimed account Schedule doesnt started yet,", eventId, account);
             return 0;
         }
 
         uint vestedAmount = getVestedAmount(eventId, account);
         uint claimedAmount = _vestingSchedules[eventId][account].claimedAmount;
 
+            console.log("Claimed account claimedAmount ,", claimedAmount);
+
         if (vestedAmount >= claimedAmount) {
-
-            console.log(
-            "getClaimableAmount #2 -- vestedAmount - claimedAmount",
-            vestedAmount - claimedAmount);
-
-
-            return vestedAmount - claimedAmount;
+            uint result = vestedAmount - claimedAmount;
+            console.log("Claimed account Result ,", result);
+            return result;
         } 
-            console.log(
-            "getClaimableAmount #3 -- vestedAmount - claimedAmount",
-            0);
 
-
-        // This should not normally happen, as claimed amount should never exceed vested amount
         return 0;
+        
     }
 
 
     function getStartTimestamp(address account, string memory eventId) private view returns(uint){
+
         uint accounStartTimestamp = _vestingSchedules[eventId][account].startTimestamp;
 
         //Use events time stamp, if account has not one
