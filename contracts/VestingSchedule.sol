@@ -31,6 +31,8 @@ contract VestingSchedule is ReentrancyGuard, Ownable, AccessControl {
         uint startTimestamp;
         uint vestingSeconds;
         uint cliffSeconds;
+        uint gptvPrice;
+        string privateAccount;
 
     }
 
@@ -96,7 +98,7 @@ contract VestingSchedule is ReentrancyGuard, Ownable, AccessControl {
 
     //Creates new event 
      function createNewEvent(string memory eventName, string memory eventId, 
-     uint tgeRate, uint vestingSeconds, uint cliffSeconds) public onlyOwner {
+     uint tgeRate, uint vestingSeconds, uint cliffSeconds, uint gptvPrice, string memory privateAccount) public onlyOwner {
         if(_events[eventId].tgeRate > 0){
             revert("The event already exists.");
         }
@@ -107,7 +109,9 @@ contract VestingSchedule is ReentrancyGuard, Ownable, AccessControl {
                             tgeRate, 
                             startTimestamp,
                             vestingSeconds, 
-                            cliffSeconds);
+                            cliffSeconds,
+                            gptvPrice,
+                            privateAccount);
         _allEventIds.push(eventId);
     }
 
