@@ -25,7 +25,7 @@ module.exports = {
       },
     },
     sepolia: {
-      url: 'https://eth-sepolia.g.alchemy.com/v2/2zPaNqWXrpdn9VRnUH0r1eQMWSJi__cR',
+      url: '--',
 
       accounts: [
         //Account 1
