@@ -10,9 +10,6 @@ import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol";
 import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 
-import "hardhat/console.sol";
-
-
 contract VestingSchedule is ReentrancyGuard, Ownable, AccessControl {
 
     bytes32 public constant OWNER_ROLE = keccak256("OWNER_ROLE");
@@ -185,12 +182,6 @@ contract VestingSchedule is ReentrancyGuard, Ownable, AccessControl {
         }
 
         uint amount = getClaimableAmount(eventId, account);
-
-         console.log(
-            "Getting Claimable Amoount --> Event: %s, Amount :%s, ",
-            eventId,
-            amount);
-
        
         if((amount != _vestingSchedules[eventId][account].allocation ) && _vestingSchedules[eventId][account].isClaimInTGE != true)
         {
@@ -199,30 +190,16 @@ contract VestingSchedule is ReentrancyGuard, Ownable, AccessControl {
  
             amount +=tgeAmount;
             _vestingSchedules[eventId][account].isClaimInTGE = true;
-
-            console.log(
-                "Calculatig TGE --> Event: %s, Amount :%s, ",
-                eventId,
-                amount);
         }
 
         
 
         
         require(amount > 0, "No token to be claim.");
-         console.log("Start to transfer ");       
         _token.transfer(account, amount);
         
         _vestingSchedules[eventId][account].claimedAmount += amount;
         _totalClaimedAllocation += amount;
-
-        console.log(
-            "Transfer is Done. Result --> Event: %s, Amount :%s, Address :%s",
-            eventId,
-            amount,
-            account);
-
-
 
         emit AllocationClaimed(account, amount, block.timestamp);
     }
@@ -296,31 +273,25 @@ contract VestingSchedule is ReentrancyGuard, Ownable, AccessControl {
     }
 
     function getVestedAmount(string memory eventId, address account) public view returns (uint) {
-        console.log("Start Vested Amount");
         uint vestingSeconds = getVestingSeconds(account, eventId);
         if (vestingSeconds == 0) {
             return 0; // No vesting period defined
         }
 
-        console.log("Start Vested Amount, vestingSeconds", vestingSeconds);
-
         uint startTimestamp = getStartTimestamp(account, eventId);
         if (block.timestamp <= startTimestamp) {
             return 0; // Vesting has not started yet
         }
-        console.log("Start Vested Amount, startTimestamp", startTimestamp);
 
         uint totalAllocation = _vestingSchedules[eventId][account].allocation;
         if (block.timestamp >= startTimestamp + vestingSeconds) {
             return totalAllocation; // Entire amount has vested
         }
 
-        console.log("Start Vested Amount, totalAllocation", totalAllocation);
-
         // Calculate elapsed time relative to the vesting duration
         uint elapsedVestingTime = block.timestamp - startTimestamp;
         uint result=  (totalAllocation * elapsedVestingTime) / vestingSeconds; 
-        console.log("Vested Amount", result);
+
         return result;
     }
 
@@ -337,21 +308,15 @@ contract VestingSchedule is ReentrancyGuard, Ownable, AccessControl {
 
     function getClaimableAmount(string memory eventId, address account) public view returns (uint) {
 
-        console.log("Claimed Amount Worked,", eventId, account);
         if (block.timestamp < (getStartTimestamp(account, eventId) + getCliffSeconds(account, eventId))) {
-
-            console.log("Claimed account Schedule doesnt started yet,", eventId, account);
             return 0;
         }
 
         uint vestedAmount = getVestedAmount(eventId, account);
         uint claimedAmount = _vestingSchedules[eventId][account].claimedAmount;
 
-            console.log("Claimed account claimedAmount ,", claimedAmount);
-
         if (vestedAmount >= claimedAmount) {
             uint result = vestedAmount - claimedAmount;
-            console.log("Claimed account Result ,", result);
             return result;
         } 
 
@@ -417,12 +382,6 @@ contract VestingSchedule is ReentrancyGuard, Ownable, AccessControl {
 
         // Swap yap ve GPTV token miktarını al
         amountOut = swapRouter.exactInputSingle(params);
-        console.log(
-            "Swapiing --> Event: %s, AmountIn :%s, AmountOut :%s",
-            eventId,
-            amountIn,
-            amountOut);
-
 
         addVestingSchedule(msg.sender, amountOut, eventId, 0, 0);
 
