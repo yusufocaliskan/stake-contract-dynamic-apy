@@ -17,7 +17,6 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
         uint stakeDays;
         uint apy;
         uint totalStakedTokens;
-        uint earlyUnStakeFeePercentage;
         bool isPaused;
         uint256 minStakingAmount;
         uint256 maxStakingLimit;
@@ -72,6 +71,8 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
     event UnStake(address indexed user, uint256 amount); // when unstaking
     event EarlyUnStakeFee(address indexed user, uint256 amount); // when early staking
     event ClaimReward(address indexed user, uint256 amount); //when clamin the reward
+    event StakePoolCreated(string indexed stakePoolId, string name, uint startDate, uint endDate, uint apy, uint256 minStakingAmount, uint256 maxStakingLimit);
+
 
 
     //================== MODIFIERS ========================
@@ -99,28 +100,33 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
         uint startDate,
         uint endDate,
         uint apy,
-        uint totalStakedTokens,
-        uint earlyUnStakeFeePercentage,
         uint256 minStakingAmount,
         uint256 maxStakingLimit) public onlyOwner{
             require(apy <= 10000, "TStaking--> APY rate should be less then 10000");
 
             require(startDate < endDate, "TStaking--> Start date connot be greater than the end date");
 
-        _stakePool[stakePoolId] = StakePools(
-             stakePoolId,
-             name,
-             startDate,
-             endDate,
-             getStakingDurationInDays(startDate, endDate),
-             apy,
-             totalStakedTokens,
-             earlyUnStakeFeePercentage,
-             false,
-             minStakingAmount,
-             maxStakingLimit
-        );
+        // Create a new stake pool
+        StakePools memory newPool = StakePools({
+            stakePoolId: stakePoolId,
+            name: name,
+            startDate: startDate,
+            endDate: endDate,
+            stakeDays: getStakingDurationInDays(startDate, endDate),
+            apy: apy,
+            totalStakedTokens: 0,
+            isPaused: false,
+            minStakingAmount: minStakingAmount,
+            maxStakingLimit: maxStakingLimit
+        });
+
+        // set it
+        _stakePool[stakePoolId] = newPool;
+        
         _allStakePools.push(stakePoolId);
+
+        emit StakePoolCreated(stakePoolId, name, startDate, endDate, apy, minStakingAmount, maxStakingLimit);
+
     }
 
     //gets the amount that the users wants 
@@ -206,6 +212,7 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
         uint256 totalStakedTime = currentTime - userTimestamp;
 
         userReward += ((totalStakedTime * _userStakeAmount * _apyRate) / 365 days) / PERCENTAGE_DENOMINATOR;
+
 
         return (userReward, currentTime);
 
