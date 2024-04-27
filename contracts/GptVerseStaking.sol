@@ -130,7 +130,7 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
     }
 
     //gets the amount that the users wants 
-    function stakeToken(address userAddress, uint256 _amount, string memory _stakePoolId) external nonReentrant onlyOwner{
+    function stakeToken(address userAddress, uint256 _amount, string memory _stakePoolId) external nonReentrant{
         
         bool _isStakingPaused = _stakePool[_stakePoolId].isPaused; 
         uint _stakeStartDate = _stakePool[_stakePoolId].startDate; 
@@ -239,7 +239,7 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
 
         require(rewardAmount >0,"No reward to claim");
 
-        IERC20(_tokenAddress).transfer(msg.sender, rewardAmount);
+        IERC20(_tokenAddress).transfer(userAddress, rewardAmount);
 
         _users[_stakePoolId][userAddress].rewardAmount = 0;
         _users[_stakePoolId][userAddress].rewardClaimedSoFar -= rewardAmount;
