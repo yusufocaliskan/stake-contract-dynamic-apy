@@ -5,7 +5,7 @@ async function main() {
 
   //sepolia owner
   const ownerAdress = '0xeB80Df01fc3a988E88a1f70a74e5e0a0E77c1408';
-
+  const tokenAddress = '0x0165878A594ca255338adfa4d48449f69242Eb8F';
   //Local owner
   // const ownerAdress = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266';
 
@@ -17,27 +17,19 @@ async function main() {
     await firstToken.getAddress(),
   );
 
-  // //Second Token
-  // const SeconToken = await hre.ethers.getContractFactory('STT');
-
-  // const secondToken = await SeconToken.deploy(ownerAdress);
-  // console.log('Second Token Contract Address', await secondToken.getAddress());
-
-  //Deploy vesting schedule
-  const VestingSchedule = await hre.ethers.getContractFactory(
-    'VestingSchedule',
+  //Deploy Staking contract
+  const GptVerseStaking = await hre.ethers.getContractFactory(
+    'GptVerseStaking',
   );
 
-  const gptvRate = 20;
-  const vestingSchedule = await VestingSchedule.deploy(
+  const gptVerseStaking = await GptVerseStaking.deploy(
     ownerAdress,
-    await firstToken.getAddress(),
-    gptvRate,
+    tokenAddress,
   );
 
   console.log(
-    'VestingSchedule Contract Address',
-    await vestingSchedule.getAddress(),
+    'gptVerseStaking Contract Address',
+    await gptVerseStaking.getAddress(),
   );
 }
 

@@ -5,6 +5,7 @@ async function main() {
 
   //sepolia owner
   const ownerAdress = '0xeB80Df01fc3a988E88a1f70a74e5e0a0E77c1408';
+  const vestingContratOwner = '0xdA81C44a52272E5f9dbd6D63e04fD0A983267E0a';
 
   //Local owner
   // const ownerAdress = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266';
@@ -30,7 +31,7 @@ async function main() {
 
   const gptvRate = 20;
   const vestingSchedule = await VestingSchedule.deploy(
-    ownerAdress,
+    vestingContratOwner,
     await firstToken.getAddress(),
     gptvRate,
   );

@@ -1,13 +1,18 @@
 const hre = require('hardhat');
 
 async function main() {
+  //First Test Token
+
+  //sepolia owner
   const ownerAdress = '0xeB80Df01fc3a988E88a1f70a74e5e0a0E77c1408';
 
-  //Second Token
-  const SeconToken = await hre.ethers.getContractFactory('ST');
+  const FirstToken = await hre.ethers.getContractFactory('FTT');
 
-  const secondToken = await SeconToken.deploy(ownerAdress);
-  console.log('Second Token Contract Address', await secondToken.getAddress());
+  const firstToken = await FirstToken.deploy(ownerAdress);
+  console.log(
+    'First Token Contract Address (GPTV)',
+    await firstToken.getAddress(),
+  );
 }
 
 main().catch((error) => {
