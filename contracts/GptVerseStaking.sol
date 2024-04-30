@@ -291,6 +291,10 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
         return (_apy * 100000) / 3650000;
     }
 
+    function calculateSecondlyAPY(uint _apy) public pure returns (uint256) {
+        return (_apy * 1e18) / 365 / 24 / 60 / 60;
+    }
+
     function claimReward(address userAddress, string memory _stakePoolId, uint256 _stakeId) external nonReentrant whenTreasuryHasBalance(_users[_stakePoolId][userAddress].rewardAmount) {
 
         // _calculateRewards(userAddress, _stakePoolId);

@@ -1,54 +1,59 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
+import "hardhat/console.sol";
+
 contract StakeTest {
 
-
-   function calculateUserEstimatedRewards() public view returns(uint256) {
-        uint256 userReward;
-        uint _stakeAmount = 1000;
-        uint _apyRate = 2000;  
-        uint _lastStakeTime = 1714403595;
-        uint256 currentTime = block.timestamp;
-        uint256 elapsedTime = currentTime - _lastStakeTime;
-        
-        uint256 secondlyRate = calculateSecondlyAPY(_apyRate);
-
-        userReward = uint128(_stakeAmount * (secondlyRate * elapsedTime) / 1e18);
-
-        return userReward;
-    }
-
-    function testoo()public pure returns(uint){
-        return 2012;
-    }
-
+    //Total reward that the use would have at the end of the stake pool time
     function calculateTotalRewards(uint _stakeAmount, uint _apyRate, uint _startStakeTime, uint _endStakeTime) public pure returns(uint256) {
-        uint256 totalReward;
-        uint256 elapsedTime = _endStakeTime - _startStakeTime;  
 
-        uint256 secondlyRate = calculateSecondlyAPY(_apyRate);  
-        totalReward = _stakeAmount * secondlyRate * elapsedTime / 1e18;  
+        uint256 elapsedTime = _endStakeTime - _startStakeTime;
+        uint256 daysElapsed = elapsedTime / 60 / 60 / 24; 
+        uint256 dailyRate = calculateDailyAPY(_apyRate);
 
-        return totalReward; 
+        uint256 totalReward = _stakeAmount * dailyRate * daysElapsed / 1e18;
+
+        console.log("amount --->", _stakeAmount);
+        console.log("apy --->", _apyRate);
+        console.log("start --->", _startStakeTime);
+        console.log("end --->", _endStakeTime);
+        console.log("elapsedTime --->", elapsedTime);
+        console.log("daysElapsed --->", daysElapsed);
+        console.log("dailyRate --->", dailyRate);
+        console.log("totalReward --->", totalReward);
+
+        return totalReward;
     }
 
-    
-    function testCalculateTotalRewards(uint _stakeAmount, uint _apyRate, uint _days) public pure returns(uint256) {
-        uint256 totalReward;
-        
+    function calculateCurrentRewards(uint _stakeAmount, uint _apyRate, uint _startStakeTime) public view returns(uint256) {
+        uint256 currentTime = block.timestamp;
+        uint256 elapsedTime = currentTime - _startStakeTime;
+        uint256 daysElapsed = elapsedTime / 86400;  
+        uint256 dailyRate = calculateDailyAPY(_apyRate);
+        uint256 currentReward = _stakeAmount * dailyRate * daysElapsed / 1e18;  
 
-        uint256 daily_rate = _apyRate / 365;
-        totalReward = _stakeAmount * (daily_rate /10000) * _days;
+        console.log("amount --->", _stakeAmount);
+        console.log("apy --->", _apyRate);
+        console.log("start --->", _startStakeTime);
+        console.log("elapsedTime --->", elapsedTime);
+        console.log("daysElapsed --->", daysElapsed);
+        console.log("dailyRate --->", dailyRate);
+        console.log("currentReward --->", currentReward);
 
-        return totalReward;  
+        return currentReward;
     }
 
 
+    // Günlük APY'yi hesaplar
+    function calculateDailyAPY(uint _apyRate) public pure returns (uint256) {
+        return (_apyRate * 1e18) / 365;
+    }
 
-
-    
-    function calculateSecondlyAPY(uint _apy) public pure returns (uint256) {
-        return (_apy * 1e18) / 365 / 24 / 60 / 60;
-    }   
+    // Test edilen ödüllerin eşitliğini kontrol eder
+    function testRewardEquality(uint _stakeAmount, uint _apyRate, uint _startStakeTime, uint _endStakeTime) public view returns (uint256, uint256) {
+        uint256 totalRewards = calculateTotalRewards(_stakeAmount, _apyRate, _startStakeTime, _endStakeTime);
+        uint256 currentRewards = calculateCurrentRewards(_stakeAmount, _apyRate, _startStakeTime);
+        return(totalRewards,  currentRewards); 
+    }
 }
