@@ -34,10 +34,8 @@ describe('StakeTest Contract', function () {
     const result = await stakeContract.createStakePool(
       'test1', //id
       'Test Stake Pool', //name
-      1714505815, //start Tue Apr 30 2024 19:34:38 GMT+0000
-
-      1746041815, //end Wed Apr 30 2025 19:34:38 GMT+0000
-
+      1682936598, //start
+      1746094998, //end
       5000, //apy
       parseUnits('1', 18), //min
       parseUnits('1000000', 18), //max
@@ -51,10 +49,17 @@ describe('StakeTest Contract', function () {
     console.log('Stake Pools-->', resp);
   });
   it('3. Stake Token to the Pool', async function () {
-    const resp = await stakeContract.stakeToken(
+    await stakeContract.stakeToken(
       user1.address, //user
       parseUnits('1', 18), //amount
       'test1', //pool id
+      1714558998,
+    );
+    await stakeContract.stakeToken(
+      user1.address, //user
+      parseUnits('1', 18), //amount
+      'test1', //pool id
+      1682936598,
     );
   });
 
@@ -67,11 +72,28 @@ describe('StakeTest Contract', function () {
   });
 
   it('5. calculateTotalRewards', async function () {
-    const resp = await stakeContract.calculateTotalRewards(
+    // const resp = await stakeContract.calculateTotalRewardsOfStake(
+    //   user1.address, //user
+    //   'test1', //pool id
+    //   1,
+    // );
+    const resp = await stakeContract.calculateTotalRewardsOfStake(
       user1.address, //user
       'test1', //pool id
-      1,
+      2,
     );
-    console.log('NewtestcalculateTotalRewards --> ', formatUnits(resp, 18));
+
+    console.log('calculateTotalRewards --> ', formatUnits(resp, 18));
+  });
+  it('6. calculateCurrentStakeRewardByStakeId', async function () {
+    const resp = await stakeContract.calculateCurrentStakeRewardByStakeId(
+      user1.address, //user
+      'test1', //pool id
+      2,
+    );
+    console.log(
+      'calculateCurrentStakeRewardByStakeId --> ',
+      formatUnits(resp, 18),
+    );
   });
 });

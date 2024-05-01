@@ -92,7 +92,7 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
     //Chekcs if the address has enought balance
     modifier whenTreasuryHasBalance(uint256 amount){
 
-        require(IERC20(_tokenAddress).balanceOf(address(this)) >= amount, "TStaking--> Insufficient funds in the treasury.");
+        require(_token.balanceOf(address(this)) >= amount, "TStaking--> Insufficient funds in the treasury.");
         _;
     }
 
@@ -140,35 +140,23 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
 
     }
 
+    function checkStakingConditions(address userAddress, uint256 _amount, string memory _stakePoolId) internal view {
+        require(!_stakePool[_stakePoolId].isPaused, "The stake is paused.");
+        require(block.timestamp > _stakePool[_stakePoolId].startDate, "Staking not started yet");
+        require(_stakePool[_stakePoolId].endDate > block.timestamp, "Staking is ended.");
+        require(_users[_stakePoolId][userAddress].totalStakedAmount + _amount <= _stakePool[_stakePoolId].maxStakingLimit, "Max staking token limit reached");
+        require(_amount > 0, "Stake amount must be non-zero.");
+        require(_amount >= _stakePool[_stakePoolId].minStakingAmount, "Stake Amount must be greater than min. amount allowed.");
+    }
+
+
     //gets the amount that the users wants 
-    function stakeToken(address userAddress, uint256 _amount, string memory _stakePoolId) external nonReentrant{
+    function stakeToken(address userAddress, uint256 _amount, string memory _stakePoolId, uint256 testStakeDate) public nonReentrant{
         
-        bool _isStakingPaused = _stakePool[_stakePoolId].isPaused; 
-        uint _stakeStartDate = _stakePool[_stakePoolId].startDate; 
-        uint _stakeEndDate = _stakePool[_stakePoolId].endDate; 
-        uint _maxStakingLimit = _stakePool[_stakePoolId].maxStakingLimit; 
-        uint _minStakingAmount = _stakePool[_stakePoolId].minStakingAmount; 
-        uint _totalStakedAmount = _users[_stakePoolId][userAddress].totalStakedAmount; 
-        // uint _lastRewardCalculationTime = _users[_stakePoolId][userAddress].lastRewardCalculationTime; 
+    checkStakingConditions(userAddress, _amount, _stakePoolId);
+
         bool isUserExistsInThePool = _users[_stakePoolId][userAddress].account != address(0);
  
-
-        //is the staking paused?
-        require(!_isStakingPaused,"The stake is paused.");
-
-        //Check for the time
-        uint256 currentTime = block.timestamp;
-
-        require(currentTime > _stakeStartDate, "Staking not started yet");
-        require(_stakeEndDate > currentTime , "Staking is ended.");
-
-        //Check for the amounts
-        require(_totalStakedAmount + _amount <= _maxStakingLimit, "Max staking token limit reached ${_maxStakingLimit}");
-
-        require(_amount > 0, "Stake amount must be non-zero.");
-
-        require( _amount >= _minStakingAmount, "Stake Amount must be greater than min. amount allowed.");
-
         //If the user didn't register for the stake pool
         if(!isUserExistsInThePool)
         {
@@ -177,9 +165,7 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
 
         //Update the users info
         _users[_stakePoolId][userAddress].totalStakedAmount += _amount;
-        _users[_stakePoolId][userAddress].lastStakeTime += currentTime;
 
-        console.log("Stake tokennn");
         //make the transfer
         _token.transferFrom(userAddress, address(this), _amount);
 
@@ -188,13 +174,15 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
         Stakes memory newStake = Stakes({
                 stakePoolId:_stakePoolId,
                 stakeId: stakeId,
-                startDate:block.timestamp,
+                startDate: testStakeDate,
+                // startDate: block.timestamp,
                 stakeAmount: _amount,
                 stakeReward: 0
-            });
+        });
 
         _stakes[_stakePoolId][userAddress][stakeId] = newStake;
         _allStakeIds.push(stakeId);
+
         //Throw an event
         emit Stake(userAddress, _amount);
     }
@@ -331,44 +319,92 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
     //     return totalReward;
     // }
 
-    function calculateTotalRewards(address userAddress, string memory _stakePoolId, uint256 _stakeId) public view returns(uint256) {
+    //Total reward of a spesific stake in a pool.
+    function calculateTotalRewardsOfStake(address userAddress, string memory _stakePoolId, uint256 _stakeId) public view returns(uint256) {
+
+
+        //     // Günlük Faiz Getirisi = (Anapara / 100) x (Faiz Oranı / 365) x Gün Sayısı​ Aylık 
+        //     // Faiz Getirisi = (Anapara / 100) x (Faiz Oranı / 12) x Ay Sayısı​ Yıllık Faiz
+        //     // Getirisi = (Anapara / 100) x (Faiz Oranı) x Yıl Sayısı​
+
+
         // Staked amount
-        uint256 _stakeAmount = _stakes[_stakePoolId][userAddress][_stakeId].stakeAmount;
+        uint256 stakeAmount = _stakes[_stakePoolId][userAddress][_stakeId].stakeAmount;
 
         // Start and end dates of the stake
         // uint _stakeStartDate = _stakes[_stakePoolId][userAddress][_stakeId].startDate;
         // uint _stakeEndDate = _stakes[_stakePoolId][userAddress][_stakeId].endDate;
 
-        uint _stakePoolEndDate = _stakePool[_stakePoolId].endDate;
-        uint _stakePoolStartDate = _stakePool[_stakePoolId].startDate;
+        uint256 currentTime = block.timestamp;
+        uint stakePoolStartDate = _stakePool[_stakePoolId].startDate;
+        uint stakeStartDate = _stakes[_stakePoolId][userAddress][_stakeId].startDate;
+        uint stakePoolEndDate = _stakePool[_stakePoolId].endDate;
+
         // APY of the pool
 
-        uint256 _apyRate = _stakePool[_stakePoolId].apy;
+        uint256 apyRate = _stakePool[_stakePoolId].apy;
 
-        uint256 elapsedTime = _stakePoolEndDate - _stakePoolStartDate;
-        uint256 daysElapsed = elapsedTime / 86400; // seconds in a day
+        uint256 elapsedTime = stakePoolEndDate - stakeStartDate;
 
-        uint256 dailyRate = (_apyRate * 1e18) / 36500; 
+        // uint256 daysElapsed = elapsedTime / 86400; // seconds in a day
+        uint stakeDays = getStakingDurationInDays(stakeStartDate, stakePoolEndDate); 
+        uint totalStakePoolDays = getStakingDurationInDays(stakePoolStartDate, stakePoolEndDate); 
 
-        uint256 interestPerDay = _stakeAmount * dailyRate / 1e20; 
-        uint256 totalInterest = interestPerDay * daysElapsed;
 
-        // uint256 currentTime = block.timestamp;
-        // uint256 elapsedTime = currentTime - _startStakeTime;
-        // uint256 daysElapsed = elapsedTime / 86400;  
-        // uint256 dailyRate = calculateDailyAPY(_apyRate);
-        // uint256 currentReward = _stakeAmount * dailyRate * daysElapsed / 1e18;  
+         // Prevent overflow
+        if (currentTime > stakeStartDate + stakeDays * 1 days) {
+            currentTime = stakeStartDate + stakeDays * 1 days;
+        }
 
-        console.log("amount --->", _stakeAmount);
-        console.log("apy --->", _apyRate);
-        // console.log("start --->", _startStakeTime);
+
+        uint256 dailyRate = (apyRate * 1e18) / 36500; 
+
+        uint256 interestPerDay = stakeAmount * dailyRate / 1e20; 
+        uint256 totalRewardOfTheStake = interestPerDay * stakeDays;
+
+
+        console.log("amount --->", stakeAmount);
+        console.log("apy --->", apyRate);
         console.log("elapsedTime --->", elapsedTime);
-        console.log("daysElapsed --->", daysElapsed);
+        console.log("totalStakePoolDays --->", totalStakePoolDays);
+        console.log("_stakeDays --->", stakeDays);
         console.log("dailyRate --->", dailyRate);
-        // console.log("currentReward --->", currentReward);
+        console.log("totalRewardOfTheStake --->", totalRewardOfTheStake);
+
+        return totalRewardOfTheStake;
+    }
+    //Total reward of a spesific stake in a pool.
+    function calculateCurrentStakeRewardByStakeId(address userAddress, string memory _stakePoolId, uint256 _stakeId) public view returns(uint256) {
 
 
-        return totalInterest;
+        //     // Günlük Faiz Getirisi = (Anapara / 100) x (Faiz Oranı / 365) x Gün Sayısı​ Aylık 
+        //     // Faiz Getirisi = (Anapara / 100) x (Faiz Oranı / 12) x Ay Sayısı​ Yıllık Faiz
+        //     // Getirisi = (Anapara / 100) x (Faiz Oranı) x Yıl Sayısı​
+
+
+        // Staked amount
+        uint256 stakeAmount = _stakes[_stakePoolId][userAddress][_stakeId].stakeAmount;
+
+       uint256 currentTime = block.timestamp;
+        uint stakePoolStartDate = _stakePool[_stakePoolId].startDate;
+
+        uint256 apyRate = _stakePool[_stakePoolId].apy;
+
+        uint stakeDays = getStakingDurationInDays(stakePoolStartDate, currentTime); 
+
+        uint256 dailyRate = (apyRate * 1e18) / 36500; 
+
+        uint256 interestPerDay = stakeAmount * dailyRate / 1e20; 
+        uint256 totalRewardOfTheStake = interestPerDay * stakeDays;
+
+
+        console.log("amount --->", stakeAmount);
+        console.log("apy --->", apyRate);
+        console.log("_stakeDays --->", stakeDays);
+        console.log("dailyRate --->", dailyRate);
+        console.log("totalRewardOfTheStake --->", totalRewardOfTheStake);
+
+        return totalRewardOfTheStake;
     }
 
     function isStakePoolEnded(string memory _stakePoolId) public view returns (bool) {
@@ -483,7 +519,6 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
 
 
     function getStakingDurationInDays(uint256 _startTimestamp, uint256 _endTimestamp) public pure returns (uint256) {
-        require(_endTimestamp > _startTimestamp, "End date must be after start date");
         uint256 durationInSeconds = _endTimestamp - _startTimestamp;
         uint256 durationInDays = durationInSeconds / 60 / 60 / 24;
         return durationInDays;
