@@ -262,49 +262,43 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
     }
 
     //current reward of a spesific stake in a pool.
-    function calculateCurrentStakeRewardByStakeId(address userAddress, string memory _stakePoolId, uint256 _stakeId) public view returns(uint256) {
+    // Current reward of a specific stake in a pool.
+function calculateCurrentStakeRewardByStakeId(address userAddress, string memory _stakePoolId, uint256 _stakeId) public view returns(uint256) {
+    console.log("calculateCurrentStakeRewardByStakeId");
 
-        console.log("calculateCurrentStakeRewardByStakeId");
+    // Staked amount
+    uint256 stakeAmount = _stakes[_stakePoolId][userAddress][_stakeId].stakeAmount;
 
-        // Staked amount
-        uint256 stakeAmount = _stakes[_stakePoolId][userAddress][_stakeId].stakeAmount;
+    uint256 currentTime = block.timestamp;
+    uint256 lastStakeRewardTime = _stakes[_stakePoolId][userAddress][_stakeId].lastStakeRewardTime;
+    uint256 stakeStartDate = _stakes[_stakePoolId][userAddress][_stakeId].startDate;
+    uint256 stakeEndDate = _stakePool[_stakePoolId].endDate;
 
-        uint256 currentTime = block.timestamp;
-        // uint stakePoolStartDate = _stakePool[_stakePoolId].startDate;
+    // Calculate the number of days from stake start to the minimum of current time or stake end time
+    uint256 effectiveStakeTime = (lastStakeRewardTime == 0) ? currentTime : lastStakeRewardTime;
+    uint256 stakeDays = getStakingDurationInDays(stakeStartDate, (effectiveStakeTime > stakeEndDate ? stakeEndDate : effectiveStakeTime));
 
-        uint256 lastStakeRewardTime = _stakes[_stakePoolId][userAddress][_stakeId].lastStakeRewardTime;
+    uint256 totalStakeDays = getStakingDurationInDays(stakeStartDate, stakeEndDate);
+    uint256 dailyRate = (_stakePool[_stakePoolId].apy * 1e18) / 36500;
+    uint256 interestPerDay = stakeAmount * dailyRate / 1e20;
 
-        uint256 stakeStartDate = _stakes[_stakePoolId][userAddress][_stakeId].startDate;
+    uint256 principalPerDay = stakeAmount / totalStakeDays;
 
-        uint256 stakeTime = lastStakeRewardTime == 0 ? currentTime : lastStakeRewardTime; 
-        console.log("stakeTime", stakeTime);
+    uint256 totalInterestReward = interestPerDay * stakeDays;
+    uint256 totalPrincipalReturn = principalPerDay * stakeDays;
 
-        uint256 apyRate = _stakePool[_stakePoolId].apy;
+    uint256 totalRewardWithPrincipal = totalInterestReward + totalPrincipalReturn;
 
-        uint stakeDays = getStakingDurationInDays(stakeStartDate, stakeTime); 
+    console.log("Staked amount:", stakeAmount);
+    console.log("Stake days calculated:", stakeDays);
+    console.log("Total stake days:", totalStakeDays);
+    console.log("Interest per day:", interestPerDay);
+    console.log("Principal per day:", principalPerDay);
+    console.log("Total reward including principal:", totalRewardWithPrincipal);
 
-        console.log('stakeDays----eeeee', stakeDays);
-        // if( stakeDays > _stakes[_stakePoolId][userAddress][_stakeId].stakeDays){
-        //     return 0;
-        // }
-        
-        uint256 dailyRate = (apyRate * 1e18) / 36500; 
+    return totalRewardWithPrincipal;
+}
 
-        // console.log("totalRewardOfTheStake --->", totalRewardOfTheStake);
-
-
-
-        uint256 interestPerDay = stakeAmount * dailyRate / 1e20; 
-         console.log("amount --->", stakeAmount);
-        console.log("apy --->", apyRate);
-        console.log("_stakeDays", stakeDays);
-        console.log("interestPerDay", interestPerDay);
-        console.log("dailyRate --->", dailyRate);     
-
-        uint256 totalRewardOfTheStake = interestPerDay * stakeDays;
-
-        return totalRewardOfTheStake;
-    }
 
     function claimReward(address userAddress, string memory _stakePoolId, uint256 _stakeId) public  returns(uint256){
 
@@ -323,6 +317,7 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
         emit ClaimReward(userAddress, rewardAmount);
         return rewardAmount;
     }
+
     function isStakePoolEnded(string memory _stakePoolId) public view returns (bool) {
         uint _stakePoolStartDate = _stakePool[_stakePoolId].startDate;
         uint _stakePoolEndDate = _stakePool[_stakePoolId].endDate;
