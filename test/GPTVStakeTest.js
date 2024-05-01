@@ -34,14 +34,18 @@ describe('StakeTest Contract', function () {
     const stakeContratBalance = await token.balanceOf(stakeAddress);
     console.log('BalanceOf User 1 : ', balance);
     console.log('BalanceOf Stake Contract 1 : ', stakeContratBalance);
+
+    // await updateTimestamp(1715357702);
+    const currentTime = await ethers.provider.getBlock('latest');
+    console.log('Current time', currentTime.timestamp);
   });
 
   it('1. Create New Stake Pool', async function () {
     await stakeContract.createStakePool(
       'test1', //id
       'Test Stake Pool', //name
-      1714569086, //start
-      1746105086, //end
+      1714581223, //start
+      1746117223, //end
       5000, //apy
       parseUnits('100', 18), //min
       parseUnits('1000000', 18), //max
@@ -49,7 +53,8 @@ describe('StakeTest Contract', function () {
   });
 
   it('3. Stake Token to the Pool', async function () {
-    await updateTimestamp(20);
+    // await updateTimestampAsDays(364);
+    // await updateTimestamp(1745599108);
     await stakeContract.stakeToken(
       user1.address, //user
       parseUnits('100', 18), //amount
@@ -63,13 +68,16 @@ describe('StakeTest Contract', function () {
   });
 
   it("4. Get All the User's Stake", async function () {
-    await updateTimestamp(344);
+    // await updateTimestamp(1745771908);
+
+    await updateTimestampAsDays(364);
     await stakeContract.claimReward(
       user1.address, //user
       'test1', //pool id
       1,
     );
   });
+
   it('6. Get the Stake', async function () {
     const resp = await stakeContract.getStakeById(
       'test1', //pool id
@@ -134,9 +142,13 @@ describe('StakeTest Contract', function () {
   // });
 });
 
-const updateTimestamp = async (days) => {
+const updateTimestampAsDays = async (days) => {
   const fiveDaysLater =
     (await ethers.provider.getBlock('latest')).timestamp + days * 86400;
   await network.provider.send('evm_setNextBlockTimestamp', [fiveDaysLater]);
+  await network.provider.send('evm_mine');
+};
+const updateTimestamp = async (timeStamp) => {
+  await network.provider.send('evm_setNextBlockTimestamp', [timeStamp]);
   await network.provider.send('evm_mine');
 };
