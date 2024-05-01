@@ -279,6 +279,7 @@ function calculateCurrentStakeRewardByStakeId(address userAddress, string memory
     uint256 stakeDays = getStakingDurationInDays(stakeStartDate, (effectiveStakeTime > stakeEndDate ? stakeEndDate : effectiveStakeTime));
 
     uint256 totalStakeDays = getStakingDurationInDays(stakeStartDate, stakeEndDate);
+
     uint256 dailyRate = (_stakePool[_stakePoolId].apy * 1e18) / 36500;
     uint256 interestPerDay = stakeAmount * dailyRate / 1e20;
 
@@ -298,7 +299,6 @@ function calculateCurrentStakeRewardByStakeId(address userAddress, string memory
 
     return totalRewardWithPrincipal;
 }
-
 
     function claimReward(address userAddress, string memory _stakePoolId, uint256 _stakeId) public  returns(uint256){
 
