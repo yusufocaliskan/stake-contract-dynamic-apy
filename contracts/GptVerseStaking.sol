@@ -261,44 +261,50 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
         return totalRewardOfTheStake;
     }
 
-    //current reward of a spesific stake in a pool.
-    // Current reward of a specific stake in a pool.
-function calculateCurrentStakeRewardByStakeId(address userAddress, string memory _stakePoolId, uint256 _stakeId) public view returns(uint256) {
-    console.log("calculateCurrentStakeRewardByStakeId");
+    function calculateCurrentStakeRewardByStakeId(address userAddress, string memory _stakePoolId, uint256 _stakeId) public view returns(uint256) {
+        console.log("calculateCurrentStakeRewardByStakeId");
 
-    // Staked amount
-    uint256 stakeAmount = _stakes[_stakePoolId][userAddress][_stakeId].stakeAmount;
+        // Fetch stake details
+        uint256 stakeAmount = _stakes[_stakePoolId][userAddress][_stakeId].stakeAmount;
+        uint256 lastRewardTime = _stakes[_stakePoolId][userAddress][_stakeId].lastStakeRewardTime == 0 ? block.timestamp : _stakes[_stakePoolId][userAddress][_stakeId].lastStakeRewardTime;
+        uint256 stakeStartDate = _stakes[_stakePoolId][userAddress][_stakeId].startDate;
+        uint256 stakeEndDate = _stakePool[_stakePoolId].endDate;
 
-    uint256 currentTime = block.timestamp;
-    uint256 lastStakeRewardTime = _stakes[_stakePoolId][userAddress][_stakeId].lastStakeRewardTime;
-    uint256 stakeStartDate = _stakes[_stakePoolId][userAddress][_stakeId].startDate;
-    uint256 stakeEndDate = _stakePool[_stakePoolId].endDate;
+        // Calculate staking periods in days
+        uint256 stakeDays = getStakingDurationInDays(stakeStartDate, min(lastRewardTime, stakeEndDate));
+        uint256 totalStakeDays = getStakingDurationInDays(stakeStartDate, stakeEndDate);
 
-    // Calculate the number of days from stake start to the minimum of current time or stake end time
-    uint256 effectiveStakeTime = (lastStakeRewardTime == 0) ? currentTime : lastStakeRewardTime;
-    uint256 stakeDays = getStakingDurationInDays(stakeStartDate, (effectiveStakeTime > stakeEndDate ? stakeEndDate : effectiveStakeTime));
+        // Calculate daily interest and principal return
+        uint256 dailyInterest = calculateDailyInterest(stakeAmount, _stakePool[_stakePoolId].apy);
+        uint256 dailyPrincipalReturn = stakeAmount / totalStakeDays;
 
-    uint256 totalStakeDays = getStakingDurationInDays(stakeStartDate, stakeEndDate);
+        // Sum up total rewards
+        uint256 totalInterestReward = dailyInterest * stakeDays;
+        uint256 totalPrincipalReturn = dailyPrincipalReturn * stakeDays;
 
-    uint256 dailyRate = (_stakePool[_stakePoolId].apy * 1e18) / 36500;
-    uint256 interestPerDay = stakeAmount * dailyRate / 1e20;
+        // Calculate total reward including principal
+        uint256 totalRewardWithPrincipal = totalInterestReward + totalPrincipalReturn;
 
-    uint256 principalPerDay = stakeAmount / totalStakeDays;
+        console.log("Staked amount:", stakeAmount);
+        console.log("Stake days calculated:", stakeDays);
+        console.log("Total stake days:", totalStakeDays);
+        console.log("Interest per day:", dailyInterest);
+        console.log("Principal per day:", dailyPrincipalReturn);
+        console.log("Total reward including principal:", totalRewardWithPrincipal);
 
-    uint256 totalInterestReward = interestPerDay * stakeDays;
-    uint256 totalPrincipalReturn = principalPerDay * stakeDays;
+        return totalRewardWithPrincipal;
+    }
 
-    uint256 totalRewardWithPrincipal = totalInterestReward + totalPrincipalReturn;
+    // Utility function to calculate the minimum of two values
+    function min(uint256 a, uint256 b) internal pure returns(uint256) {
+        return a < b ? a : b;
+    }
 
-    console.log("Staked amount:", stakeAmount);
-    console.log("Stake days calculated:", stakeDays);
-    console.log("Total stake days:", totalStakeDays);
-    console.log("Interest per day:", interestPerDay);
-    console.log("Principal per day:", principalPerDay);
-    console.log("Total reward including principal:", totalRewardWithPrincipal);
-
-    return totalRewardWithPrincipal;
-}
+    // Function to calculate daily interest based on APY and stake amount
+    function calculateDailyInterest(uint256 stakeAmount, uint256 apy) internal pure returns(uint256) {
+        uint256 dailyRate = (apy * 1e18) / 36500;
+        return stakeAmount * dailyRate / 1e20;
+    }
 
     function claimReward(address userAddress, string memory _stakePoolId, uint256 _stakeId) public  returns(uint256){
 
