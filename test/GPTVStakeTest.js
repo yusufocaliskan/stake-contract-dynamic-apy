@@ -85,9 +85,9 @@ describe('StakeTest Contract', function () {
       1,
     );
     console.log(resp);
-    console.log('Staked Reward', formatEther(resp[5]));
-    console.log('Total Reward', formatEther(resp[6]));
-    console.log('Total With Amount', formatEther(resp[7]));
+    console.log('Staked Reward', formatEther(resp[6]));
+    console.log('Total Reward', formatEther(resp[7]));
+    console.log('Total With Amount', formatEther(resp[8]));
   });
   // it('4. Get current reward', async function () {
   //   await updateTimestamp(60);
