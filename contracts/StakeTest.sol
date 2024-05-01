@@ -5,8 +5,10 @@ import "hardhat/console.sol";
 
 contract StakeTest {
 
+    uint totalCalimedReward = 0;
+
     //Total reward that the use would have at the end of the stake pool time
-    function calculateTotalRewards(uint _stakeAmount, uint _apyRate, uint _startStakeTime, uint _endStakeTime) public pure returns(uint256) {
+    function calculateTotalRewards(uint256 _stakeAmount, uint _apyRate, uint _startStakeTime, uint _endStakeTime) public pure returns(uint256) {
 
         uint256 elapsedTime = _endStakeTime - _startStakeTime;
         uint256 daysElapsed = elapsedTime / 60 / 60 / 24; 
@@ -42,6 +44,17 @@ contract StakeTest {
         console.log("currentReward --->", currentReward);
 
         return currentReward;
+    }
+
+    function claimReward(uint _stakeAmount, uint _apyRate, uint _startStakeTime) public returns(uint256) {
+        uint256 currentReward = calculateCurrentRewards(_stakeAmount,_apyRate, _startStakeTime);
+            
+        totalCalimedReward = totalCalimedReward+currentReward; 
+        return currentReward;
+    }
+
+    function getTotalClaimedReward( ) public view returns(uint256) {
+        return totalCalimedReward*365;
     }
 
 

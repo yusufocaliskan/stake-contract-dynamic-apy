@@ -2,13 +2,14 @@ const { expect } = require('chai');
 const chai = require('chai');
 const { ethers } = require('hardhat');
 const BN = require('bn.js');
+const { formatUnits, parseUnits } = require('ethers');
 
-// chai ve BN (BigNumber) için uyumluluk sağlama
+//BigNumber
 chai.use(require('chai-bn')(BN));
 
 describe('StakeTest Contract', function () {
   let stakeTest;
-  let stakeAmount = 1000;
+  let stakeAmount = parseUnits('1', 18);
   let apyRate = 2000;
   let startTime = 1714406656;
   let endTime = 1745942656;
@@ -29,6 +30,26 @@ describe('StakeTest Contract', function () {
       startTime,
       endTime,
     );
+    console.log('Daily Reward', formatUnits(expectedRewards, 18) / 365);
+
+    expect(expectedRewards).to.be.a.bignumber;
+  });
+
+  it('Claim Reward', async function () {
+    const expectedRewards = await stakeTest.claimReward(
+      stakeAmount,
+      apyRate,
+      startTime,
+    );
+
+    expect(expectedRewards).to.be.a.bignumber;
+  });
+  it('Total Claimed Reward', async function () {
+    // for (let i = 0; i <= 365; i++) {
+    //   await stakeTest.claimReward(stakeAmount, apyRate, startTime);
+    // }
+    const expectedRewards = await stakeTest.getTotalClaimedReward();
+    console.log('totalClaimedReward==>', expectedRewards);
 
     expect(expectedRewards).to.be.a.bignumber;
   });
