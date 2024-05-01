@@ -57,9 +57,9 @@ describe('StakeTest Contract', function () {
     );
     await stakeContract.stakeToken(
       user1.address, //user
-      parseUnits('1', 18), //amount
+      parseUnits('5', 18), //amount
       'test1', //pool id
-      1682936598,
+      1743505026,
     );
   });
 
@@ -95,5 +95,17 @@ describe('StakeTest Contract', function () {
       'calculateCurrentStakeRewardByStakeId --> ',
       formatUnits(resp, 18),
     );
+  });
+  it('6. Claim Reward', async function () {
+    const resp = await stakeContract.claimReward(
+      user1.address, //user
+      'test1', //pool id
+      2,
+    );
+  });
+  it('6. New Balance of the User Account', async function () {
+    const balance = await token.balanceOf(user1.address);
+
+    console.log('Claim Reward --> ', formatUnits(balance, 18));
   });
 });
