@@ -10,7 +10,7 @@ contract FTT is ERC20, Ownable {
         ERC20("FTokenn", "Firstt")
         Ownable(initialOwner)
     {
-        _mint(msg.sender, 100000 * 10 ** decimals());
+        _mint(msg.sender, 900000000 * 10 ** decimals());
     }
 
     function mint(address to, uint256 amount) public onlyOwner {

@@ -1,6 +1,6 @@
 const { expect } = require('chai');
 const { parseUnits, formatEther, formatUnits } = require('ethers');
-const { ethers } = require('hardhat');
+const { ethers, network } = require('hardhat');
 
 describe('StakeTest Contract', function () {
   let token, stakeContract;
@@ -13,15 +13,21 @@ describe('StakeTest Contract', function () {
     const Token = await ethers.getContractFactory('FTT');
     token = await Token.deploy(owner.address);
     const tokenAddress = await token.getAddress();
+    console.log('tokenAddress', tokenAddress);
 
     //Deploy staking contract
     const StakeContract = await ethers.getContractFactory('GptVerseStaking');
     stakeContract = await StakeContract.deploy(owner.address, tokenAddress);
     const stakeAddress = await stakeContract.getAddress();
 
+    console.log('stakeAddress', stakeAddress);
+
     //Transfer token to the user and allovement of the stakeContract
-    await token.transfer(user1.address, parseUnits('100000', 18));
-    await token.connect(user1).approve(stakeAddress, parseUnits('10000', 18));
+    await token.transfer(user1.address, parseUnits('100000000', 18));
+    await token.transfer(stakeAddress, parseUnits('100000000', 18));
+    await token
+      .connect(user1)
+      .approve(stakeAddress, parseUnits('100000000000', 18));
 
     //get the current balance
     const balance = await token.balanceOf(user1.address);
@@ -31,81 +37,106 @@ describe('StakeTest Contract', function () {
   });
 
   it('1. Create New Stake Pool', async function () {
-    const result = await stakeContract.createStakePool(
+    await stakeContract.createStakePool(
       'test1', //id
       'Test Stake Pool', //name
-      1682936598, //start
-      1746094998, //end
+      1714569086, //start
+      1746105086, //end
       5000, //apy
-      parseUnits('1', 18), //min
+      parseUnits('100', 18), //min
       parseUnits('1000000', 18), //max
     );
+  });
 
-    await result.wait();
+  it('3. Stake Token to the Pool', async function () {
+    await updateTimestamp(20);
+    await stakeContract.stakeToken(
+      user1.address, //user
+      parseUnits('100', 18), //amount
+      'test1', //pool id
+    );
   });
 
   it('2. Get List of Pools', async function () {
     const resp = await stakeContract.getAllStakePools();
     console.log('Stake Pools-->', resp);
   });
-  it('3. Stake Token to the Pool', async function () {
-    await stakeContract.stakeToken(
-      user1.address, //user
-      parseUnits('1', 18), //amount
-      'test1', //pool id
-      1714558998,
-    );
-    await stakeContract.stakeToken(
-      user1.address, //user
-      parseUnits('5', 18), //amount
-      'test1', //pool id
-      1743505026,
-    );
-  });
 
   it("4. Get All the User's Stake", async function () {
-    const resp = await stakeContract.getAllUserStakesByStakePoolsId(
+    await updateTimestamp(344);
+    await stakeContract.claimReward(
+      user1.address, //user
+      'test1', //pool id
+      1,
+    );
+  });
+  it('6. Get the Stake', async function () {
+    const resp = await stakeContract.getStakeById(
       'test1', //pool id
       user1.address, //user
+      1,
     );
-    console.log('Users Stakes : test1 pool', resp);
+    console.log(resp);
+    console.log('Staked Reward', formatEther(resp[5]));
+    console.log('Total Reward', formatEther(resp[6]));
+    console.log('Total With Amount', formatEther(resp[7]));
   });
+  // it('4. Get current reward', async function () {
+  //   await updateTimestamp(60);
+  //   const resp = await stakeContract.calculateCurrentStakeRewardByStakeId(
+  //     user1.address, //user
+  //     'test1', //pool id
+  //     1,
+  //   );
+  //   console.log('Current Reward', formatUnits(resp, 18));
+  // });
 
-  it('5. calculateTotalRewards', async function () {
-    // const resp = await stakeContract.calculateTotalRewardsOfStake(
-    //   user1.address, //user
-    //   'test1', //pool id
-    //   1,
-    // );
-    const resp = await stakeContract.calculateTotalRewardsOfStake(
-      user1.address, //user
-      'test1', //pool id
-      2,
-    );
+  // it('5. calculateTotalRewards', async function () {
 
-    console.log('calculateTotalRewards --> ', formatUnits(resp, 18));
-  });
-  it('6. calculateCurrentStakeRewardByStakeId', async function () {
-    const resp = await stakeContract.calculateCurrentStakeRewardByStakeId(
-      user1.address, //user
-      'test1', //pool id
-      2,
-    );
-    console.log(
-      'calculateCurrentStakeRewardByStakeId --> ',
-      formatUnits(resp, 18),
-    );
-  });
-  it('6. Claim Reward', async function () {
-    const resp = await stakeContract.claimReward(
-      user1.address, //user
-      'test1', //pool id
-      2,
-    );
-  });
-  it('6. New Balance of the User Account', async function () {
-    const balance = await token.balanceOf(user1.address);
+  //   const resp = await stakeContract.calculateTotalRewardsOfStake(
+  //     user1.address, //user
+  //     'test1', //pool id
+  //     1,
+  //   );
 
-    console.log('Claim Reward --> ', formatUnits(balance, 18));
-  });
+  //   console.log('calculateTotalRewards --> ', formatUnits(resp, 18));
+  // });
+  // it('6. calculateCurrentStakeRewardByStakeId', async function () {
+  //   const resp = await stakeContract.calculateCurrentStakeRewardByStakeId(
+  //     user1.address, //user
+  //     'test1', //pool id
+  //     1,
+  //   );
+  //   console.log(
+  //     'calculateCurrentStakeRewardByStakeId --> ',
+  //     formatUnits(resp, 18),
+  //   );
+  // });
+
+  // it('6. New Balance of the User Account', async function () {
+  //   const balance = await token.balanceOf(user1.address);
+
+  //   const resp = await stakeContract.calculateCurrentStakeRewardByStakeId(
+  //     user1.address, //user
+  //     'test1', //pool id
+  //     1,
+  //   );
+  //   console.log('Last Current Reward --> ', formatUnits(resp, 18));
+  //   console.log('Claim Reward --> ', formatUnits(balance, 18));
+  // });
+  // it('7. LAst Reward Balance', async function () {
+  //   const resp = await stakeContract.calculateCurrentStakeRewardByStakeId(
+  //     user1.address, //user
+  //     'test1', //pool id
+  //     1,
+  //   );
+  //   console.log('Last Current Reward --> ', formatUnits(resp, 18));
+  // });
 });
+
+const updateTimestamp = async (days) => {
+  const fiveDaysLater =
+    (await ethers.provider.getBlock('latest')).timestamp + days * 86400;
+  await network.provider.send('evm_setNextBlockTimestamp', [fiveDaysLater]);
+  await network.provider.send('evm_mine');
+};

@@ -37,9 +37,13 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
         string stakePoolId;
         uint256 stakeId;
         uint startDate;
+        uint256 lastStakeRewardTime;
+
+        uint stakeDays;
         uint stakeAmount;
         uint stakeReward;
         uint256 totalReward; //the reward that would be given to the user at the end of the stake time (the pool time)
+        uint256 totalRewardWithAmount; 
     }
 
     uint256 private idCounter;
@@ -152,9 +156,11 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
 
 
     //gets the amount that the users wants 
-    function stakeToken(address userAddress, uint256 _amount, string memory _stakePoolId, uint256 testStakeDate) public nonReentrant{
+    function stakeToken(address userAddress, uint256 _amount, string memory _stakePoolId) public nonReentrant{
         
-    checkStakingConditions(userAddress, _amount, _stakePoolId);
+        console.log("---Stake Token---");
+        //Some validations
+        checkStakingConditions(userAddress, _amount, _stakePoolId);
 
         bool isUserExistsInThePool = _users[_stakePoolId][userAddress].account != address(0);
  
@@ -172,16 +178,20 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
 
         uint256 stakeId =  generateId();
 
+        uint stakePoolEndDate = _stakePool[_stakePoolId].endDate;
+        uint stakeDays = getStakingDurationInDays(block.timestamp, stakePoolEndDate);
         Stakes memory newStake = Stakes({
                 stakePoolId:_stakePoolId,
                 stakeId: stakeId,
-                startDate: testStakeDate,
-                // startDate: block.timestamp,
+                // startDate: testStakeDate,
+                lastStakeRewardTime: 0,
+                startDate: block.timestamp,
+                stakeDays: stakeDays,
                 stakeAmount: _amount,
                 stakeReward: 0,
-                totalReward: 0 
+                totalReward: 0, 
+                totalRewardWithAmount:0
         });
-
         _stakes[_stakePoolId][userAddress][stakeId] = newStake;
 
         //calculate the total reward for the current stake
@@ -189,6 +199,7 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
 
         //update it
         _stakes[_stakePoolId][userAddress][stakeId].totalReward =totalReward; 
+        _stakes[_stakePoolId][userAddress][stakeId].totalRewardWithAmount =totalReward+_amount; 
 
         _allStakeIds.push(stakeId);
 
@@ -256,31 +267,63 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
     //current reward of a spesific stake in a pool.
     function calculateCurrentStakeRewardByStakeId(address userAddress, string memory _stakePoolId, uint256 _stakeId) public view returns(uint256) {
 
+        console.log("calculateCurrentStakeRewardByStakeId");
+
         // Staked amount
         uint256 stakeAmount = _stakes[_stakePoolId][userAddress][_stakeId].stakeAmount;
 
-       uint256 currentTime = block.timestamp;
+        uint256 currentTime = block.timestamp;
         uint stakePoolStartDate = _stakePool[_stakePoolId].startDate;
+
+        uint256 lastStakeRewardTime = _stakes[_stakePoolId][userAddress][_stakeId].lastStakeRewardTime;
+
+        uint256 stakeTime = lastStakeRewardTime == 0 ? currentTime : lastStakeRewardTime; 
+
+        
 
         uint256 apyRate = _stakePool[_stakePoolId].apy;
 
-        uint stakeDays = getStakingDurationInDays(stakePoolStartDate, currentTime); 
+        uint stakeDays = getStakingDurationInDays(stakePoolStartDate, stakeTime); 
 
+        // if( stakeDays > _stakes[_stakePoolId][userAddress][_stakeId].stakeDays){
+        //     return 0;
+        // }
+        
         uint256 dailyRate = (apyRate * 1e18) / 36500; 
 
+        // console.log("totalRewardOfTheStake --->", totalRewardOfTheStake);
+
+
+
         uint256 interestPerDay = stakeAmount * dailyRate / 1e20; 
-        uint256 totalRewardOfTheStake = interestPerDay * stakeDays;
-
-
-        console.log("amount --->", stakeAmount);
+         console.log("amount --->", stakeAmount);
         console.log("apy --->", apyRate);
-        console.log("_stakeDays --->", stakeDays);
-        console.log("dailyRate --->", dailyRate);
-        console.log("totalRewardOfTheStake --->", totalRewardOfTheStake);
+        console.log("_stakeDays", stakeDays);
+        console.log("interestPerDay", interestPerDay);
+        console.log("dailyRate --->", dailyRate);     
+
+        uint256 totalRewardOfTheStake = interestPerDay * stakeDays;
 
         return totalRewardOfTheStake;
     }
 
+    function claimReward(address userAddress, string memory _stakePoolId, uint256 _stakeId) public  returns(uint256){
+
+        console.log("----Claim Token---");
+        // _calculateRewards(userAddress, _stakePoolId);
+        uint256 rewardAmount = calculateCurrentStakeRewardByStakeId(userAddress, _stakePoolId, _stakeId);
+
+
+        console.log("rewardAmount", rewardAmount);
+        _token.transfer(userAddress, rewardAmount);
+
+         _stakes[_stakePoolId][userAddress][_stakeId].lastStakeRewardTime = block.timestamp;
+         _stakes[_stakePoolId][userAddress][_stakeId].stakeReward = rewardAmount;
+
+
+        emit ClaimReward(userAddress, rewardAmount);
+        return rewardAmount;
+    }
     function isStakePoolEnded(string memory _stakePoolId) public view returns (bool) {
         uint _stakePoolStartDate = _stakePool[_stakePoolId].startDate;
         uint _stakePoolEndDate = _stakePool[_stakePoolId].endDate;
@@ -338,18 +381,7 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
  //================== SOME UTILS  ========================
     
 
-    function claimReward(address userAddress, string memory _stakePoolId, uint256 _stakeId) public  returns(uint256){
-
-        // _calculateRewards(userAddress, _stakePoolId);
-        uint256 rewardAmount = calculateCurrentStakeRewardByStakeId(userAddress, _stakePoolId, _stakeId);
-
-
-        _token.transfer(userAddress, rewardAmount);
-
-        emit ClaimReward(userAddress, rewardAmount);
-        console.log("rewardAmount", rewardAmount) ;
-        return rewardAmount;
-    }
+    
 
     //================== GETTERS ========================
 
