@@ -59,7 +59,7 @@ describe('StakeTest Contract', function () {
   });
 
   it('3. Stake Token to the Pool', async function () {
-    await updateTimestampAsDays(300);
+    // await updateTimestampAsDays(300);
     // await updateTimestamp(1745599108);
     await stakeContract.stakeToken(
       user1.address, //user
@@ -68,7 +68,17 @@ describe('StakeTest Contract', function () {
     );
     await stakeContract.stakeToken(
       user1.address, //user
-      parseUnits('200', 18), //amount
+      parseUnits('100', 18), //amount
+      'test1', //pool id
+    );
+    await stakeContract.stakeToken(
+      user1.address, //user
+      parseUnits('100', 18), //amount
+      'test1', //pool id
+    );
+    await stakeContract.stakeToken(
+      user1.address, //user
+      parseUnits('100', 18), //amount
       'test1', //pool id
     );
     // await stakeContract.stakeToken(
@@ -98,14 +108,6 @@ describe('StakeTest Contract', function () {
   });
 
   it('6. Stakes -->', async function () {
-    await updateTimestampAsDays(304);
-    const tx = await stakeContract.claimReward4Total(
-      user1.address, //user
-      'test1', //pool id
-    );
-    await tx.wait(); // Wait for the transaction to be mined
-  });
-  it('6. Stakes -->', async function () {
     await updateTimestampAsDays(364);
     const tx = await stakeContract.claimReward4Total(
       user1.address, //user
@@ -113,6 +115,14 @@ describe('StakeTest Contract', function () {
     );
     await tx.wait(); // Wait for the transaction to be mined
   });
+  // it('6. Stakes -->', async function () {
+  //   await updateTimestampAsDays(364);
+  //   const tx = await stakeContract.claimReward4Total(
+  //     user1.address, //user
+  //     'test1', //pool id
+  //   );
+  //   await tx.wait(); // Wait for the transaction to be mined
+  // });
   it('Check final user balance and rewards', async () => {
     const finalBalance = await token.balanceOf(user1.address);
     console.log('Final User Balance: ', formatEther(finalBalance));
