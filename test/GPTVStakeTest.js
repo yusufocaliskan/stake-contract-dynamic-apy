@@ -66,11 +66,11 @@ describe('StakeTest Contract', function () {
       parseUnits('100', 18), //amount
       'test1', //pool id
     );
-    await stakeContract.stakeToken(
-      user1.address, //user
-      parseUnits('100', 18), //amount
-      'test1', //pool id
-    );
+    // await stakeContract.stakeToken(
+    //   user1.address, //user
+    //   parseUnits('100', 18), //amount
+    //   'test1', //pool id
+    // );
     // await stakeContract.stakeToken(
     //   user1.address, //user
     //   parseUnits('100', 18), //amount
