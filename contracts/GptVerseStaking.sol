@@ -377,7 +377,6 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
 
             uint256 stakeId = relevantStakeIds[i];
             uint256 rewardOfStake = calculateRewardInSeconds(userAddress, _stakePoolId, stakeId);
-            console.log("rewardOfStake",rewardOfStake);
 
             _stakes[_stakePoolId][userAddress][stakeId].stakeReward = rewardOfStake; 
 
