@@ -72,7 +72,6 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
 
     mapping( string => mapping ( address => User) ) private _users;
 
-
     IERC20 private _token;
 
 
@@ -84,7 +83,6 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
     //Address of the Staking 
     address private _tokenAddress;
 
-
     //================== EVENTS ========================
 
     event Stake(address indexed user, uint256 amount); // when staking
@@ -92,7 +90,6 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
     event EarlyUnStakeFee(address indexed user, uint256 amount); // when early staking
     event ClaimReward(address indexed user, uint256 amount); //when clamin the reward
     event StakePoolCreated(string indexed stakePoolId, string name, uint startDate, uint endDate, uint apy, uint256 minStakingAmount, uint256 maxStakingLimit);
-
 
 
     //================== MODIFIERS ========================
@@ -103,7 +100,6 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
         require(_token.balanceOf(address(this)) >= amount, "TStaking--> Insufficient funds in the treasury.");
         _;
     }
-
 
     //Initializer
     constructor( address initialOwner, address tokenAddress_) Ownable(initialOwner) 
@@ -188,8 +184,7 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
         Stakes memory newStake = Stakes({
                 stakePoolId:_stakePoolId,
                 stakeId: stakeId,
-                // startDate: testStakeDate,
-                lastStakeRewardTime: 0,
+                lastStakeRewardTime: block.timestamp,
                 startDate: block.timestamp,
                 stakeDays: stakeDays,
                 stakeAmount: _amount,
@@ -216,14 +211,24 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
     function calculateCurrentStakeRewardByStakeId(address userAddress, string memory _stakePoolId, uint256 _stakeId) public view returns(uint256) {
         console.log("calculateCurrentStakeRewardByStakeId");
 
+
+
+        uint256 totalRewardWithAmount = _stakes[_stakePoolId][userAddress][_stakeId].totalRewardWithAmount;
+
+        uint256 stakeReward = _stakes[_stakePoolId][userAddress][_stakeId].stakeReward;
+
         // Fetch stake details
         uint256 stakeAmount = _stakes[_stakePoolId][userAddress][_stakeId].stakeAmount;
-        uint256 lastRewardTime = _stakes[_stakePoolId][userAddress][_stakeId].lastStakeRewardTime == 0 ? block.timestamp : _stakes[_stakePoolId][userAddress][_stakeId].lastStakeRewardTime;
+
+        uint256 lastRewardTime = _stakes[_stakePoolId][userAddress][_stakeId].lastStakeRewardTime; 
         uint256 stakeStartDate = _stakes[_stakePoolId][userAddress][_stakeId].startDate;
         uint256 stakeEndDate = _stakePool[_stakePoolId].endDate;
 
+        // uint256 stakeDays = getStakingDurationInDays(stakeStartDate, min(lastRewardTime, stakeEndDate));
+
+        uint256 stakeDays = getStakingDurationInDays(lastRewardTime, stakeEndDate );
+
         // Calculate staking periods in days
-        uint256 stakeDays = getStakingDurationInDays(stakeStartDate, min(lastRewardTime, stakeEndDate));
         uint256 totalStakeDays = getStakingDurationInDays(stakeStartDate, stakeEndDate);
 
         // Calculate daily interest and principal return
@@ -237,12 +242,16 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
         // Calculate total reward including principal
         uint256 totalRewardWithPrincipal = totalInterestReward + totalPrincipalReturn;
 
-        console.log("Staked amount:", stakeAmount);
+
+        // console.log("Staked amount:", stakeAmount);
+        console.log("stakeReward == totalRewardWithAmount:", stakeReward == totalRewardWithAmount);
+        console.log("totalRewardWithAmount:", totalRewardWithAmount);
+        console.log("stakeReward:", stakeReward);
         console.log("Stake days calculated:", stakeDays);
         console.log("Total stake days:", totalStakeDays);
-        console.log("Interest per day:", dailyInterest);
-        console.log("Principal per day:", dailyPrincipalReturn);
-        console.log("Total reward including principal:", totalRewardWithPrincipal);
+        // console.log("Interest per day:", dailyInterest);
+        // console.log("Principal per day:", dailyPrincipalReturn);
+        // console.log("Total reward including principal:", totalRewardWithPrincipal);
 
         return totalRewardWithPrincipal;
     }
@@ -272,36 +281,21 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
         // Staked amount
         uint256 stakeAmount = _stakes[_stakePoolId][userAddress][_stakeId].stakeAmount;
 
-
-        uint stakePoolStartDate = _stakePool[_stakePoolId].startDate;
         uint stakeStartDate = _stakes[_stakePoolId][userAddress][_stakeId].startDate;
         uint stakePoolEndDate = _stakePool[_stakePoolId].endDate;
 
-
         // APY of the pool
-
         uint256 apyRate = _stakePool[_stakePoolId].apy;
 
-        uint256 elapsedTime = stakePoolEndDate - stakeStartDate;
 
         // uint256 daysElapsed = elapsedTime / 86400; // seconds in a day
         uint stakeDays = getStakingDurationInDays(stakeStartDate, stakePoolEndDate); 
-        uint totalStakePoolDays = getStakingDurationInDays(stakePoolStartDate, stakePoolEndDate); 
 
 
         uint256 dailyRate = (apyRate * 1e18) / 36500; 
 
         uint256 interestPerDay = stakeAmount * dailyRate / 1e20; 
         uint256 totalRewardOfTheStake = interestPerDay * stakeDays;
-
-
-        console.log("amount --->", stakeAmount);
-        console.log("apy --->", apyRate);
-        console.log("elapsedTime --->", elapsedTime);
-        console.log("totalStakePoolDays --->", totalStakePoolDays);
-        console.log("_stakeDays --->", stakeDays);
-        console.log("dailyRate --->", dailyRate);
-        console.log("totalRewardOfTheStake --->", totalRewardOfTheStake);
 
         return totalRewardOfTheStake;
     }
@@ -339,6 +333,8 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
 
         _token.transfer(userAddress, rewardOfStake);
 
+        _stakes[_stakePoolId][userAddress][_stakeId].lastStakeRewardTime = block.timestamp; 
+
         emit ClaimReward(userAddress, rewardAmount);
         return rewardAmount;
     }
@@ -349,25 +345,53 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
 
         uint countStakeOfPool = relevantStakeIds.length;
 
-        console.log("----claimReward4Total: Claim Token For Total---", countStakeOfPool);
+        uint256 rewardAmount = 0;
+
+        for(uint256 i = 0; i < countStakeOfPool; i++){
+
+            uint256 stakeId = relevantStakeIds[i];
+            uint256 rewardOfStake = calculateCurrentStakeRewardByStakeId(userAddress, _stakePoolId, stakeId);
+            console.log("rewardOfStake",rewardOfStake);
+
+            _stakes[_stakePoolId][userAddress][stakeId].stakeReward = rewardOfStake; 
+
+            rewardAmount += rewardOfStake;
+
+            uint256 stakeEndDate = _stakePool[_stakePoolId].endDate;
+
+            //Update last stake time
+            if (block.timestamp < stakeEndDate) {
+                _stakes[_stakePoolId][userAddress][stakeId].lastStakeRewardTime = block.timestamp;
+            } else {
+                _stakes[_stakePoolId][userAddress][stakeId].lastStakeRewardTime = stakeEndDate;
+            }
+        }
+
+        require(rewardAmount > 0,"No token to claim" );
+        _token.transfer(userAddress, rewardAmount);
+
+
+
+        console.log("Total Reward:", rewardAmount);
+        emit ClaimReward(userAddress, rewardAmount);
+        return rewardAmount;
+    }
+    function getTotalRewardsInThePoolOfUser(address userAddress, string memory _stakePoolId) public view returns(uint256){
+
+        uint256[] memory relevantStakeIds = _userPoolStakeIds[_stakePoolId][userAddress];
+
+        uint countStakeOfPool = relevantStakeIds.length;
 
         uint256 rewardAmount = 0;
 
         for(uint256 i = 0; i < countStakeOfPool; i++){
 
             uint256 stakeId = relevantStakeIds[i];
-
             uint256 rewardOfStake = calculateCurrentStakeRewardByStakeId(userAddress, _stakePoolId, stakeId);
-            console.log("rewardOfStake-->", stakeId, rewardOfStake);
-
-            _stakes[_stakePoolId][userAddress][stakeId].stakeReward = rewardOfStake; 
-
+            console.log("rewardOfStake",rewardOfStake);
             rewardAmount += rewardOfStake;
         }
 
-        _token.transfer(userAddress, rewardAmount);
-
-        emit ClaimReward(userAddress, rewardAmount);
         return rewardAmount;
     }
 
@@ -417,6 +441,7 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
         uint256 durationInDays = durationInSeconds / 60 / 60 / 24;
         return durationInDays;
     }
+
 
     function generateId() public returns (uint256) {
            idCounter++;

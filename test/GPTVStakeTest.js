@@ -92,55 +92,33 @@ describe('StakeTest Contract', function () {
     );
   });
 
-  it("4. Get All the User's Stake", async function () {
-    // await updateTimestamp(1745771908);
-    // await updateTimestampAsDays(364);
-    // await stakeContract.claimReward4Each(
-    //   user1.address, //user
-    //   'test1', //pool id
-    //   1,
-    // );
-    // await stakeContract.claimReward(
-    //   user1.address, //user
-    //   'test1', //pool id
-    //   2,
-    // );
-    // await stakeContract.claimReward(
-    //   user1.address, //user
-    //   'test1', //pool id
-    //   3,
-    // );
-  });
-
-  // it('6. Get the Stake', async function () {
-  //   const resp = await stakeContract.getStakeById(
-  //     'test1', //pool id
-  //     user1.address, //user
-  //     1,
-  //   );
-  //   console.log(resp);
-  //   console.log('Staked Reward', formatEther(resp[6]));
-  //   console.log('Total Reward', formatEther(resp[7]));
-  //   console.log('Total With Amount', formatEther(resp[8]));
-  // });
-
-  // it('6. Total Reward Of The Pool of the User', async function () {
-  //   await updateTimestampAsDays(364);
-  //   const resp = await stakeContract.calculateTotalRewardInStakePoolOfUser(
-  //     user1.address, //user
-  //     'test1', //pool id
-  //   );
-  //   console.log('Total Reward of The Pool', resp);
-  // });
   it('6. Stakes -->', async function () {
-    await updateTimestampAsDays(400);
-
-    const resp = await stakeContract.claimReward4Total(
+    await updateTimestampAsDays(364);
+    await stakeContract.claimReward4Total(
       user1.address, //user
       'test1', //pool id
     );
-    console.log('Stakes Of User', resp[0]);
+    await updateTimestampAsDays(364);
+    await stakeContract.claimReward4Total(
+      user1.address, //user
+      'test1', //pool id
+    );
   });
+  // it('6. Stakes -->', async function () {
+  //   await updateTimestampAsDays(364);
+  //   await stakeContract.claimReward4Total(
+  //     user1.address, //user
+  //     'test1', //pool id
+  //   );
+  // });
+  // it('6. Stakes -->', async function () {
+  //   await updateTimestampAsDays(100);
+  //   const res = await stakeContract.getTotalRewardsInThePoolOfUser(
+  //     user1.address, //user
+  //     'test1', //pool id
+  //   );
+  //   console.log('Total Result: ', res);
+  // });
   it('6. Stakes -->', async function () {
     const resp = await stakeContract.getAllUserStakesByStakePoolsId(
       'test1', //pool id
