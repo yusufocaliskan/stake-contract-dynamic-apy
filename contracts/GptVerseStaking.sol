@@ -244,23 +244,14 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
 
 
         // console.log("Staked amount:", stakeAmount);
-        console.log("stakeReward == totalRewardWithAmount:", stakeReward == totalRewardWithAmount);
-        console.log("totalRewardWithAmount:", totalRewardWithAmount);
-        console.log("stakeReward:", stakeReward);
         console.log("Stake days calculated:", stakeDays);
-        console.log("Total stake days:", totalStakeDays);
+        console.log("totalRewardWithAmount:", totalRewardWithAmount);
         // console.log("Interest per day:", dailyInterest);
         // console.log("Principal per day:", dailyPrincipalReturn);
         // console.log("Total reward including principal:", totalRewardWithPrincipal);
 
         return totalRewardWithPrincipal;
     }
-
-    // Utility function to calculate the minimum of two values
-    function min(uint256 a, uint256 b) internal pure returns(uint256) {
-        return a < b ? a : b;
-    }
-
     // Function to calculate daily interest based on APY and stake amount
     function calculateDailyInterest(uint256 stakeAmount, uint256 apy) internal pure returns(uint256) {
         uint256 dailyRate = (apy * 1e18) / 36500;
@@ -441,6 +432,7 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
         uint256 durationInDays = durationInSeconds / 60 / 60 / 24;
         return durationInDays;
     }
+
 
 
     function generateId() public returns (uint256) {
