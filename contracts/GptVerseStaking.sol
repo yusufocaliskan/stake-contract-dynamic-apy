@@ -20,6 +20,7 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
         bool isPaused;
         uint256 minStakingAmount;
         uint256 maxStakingLimit;
+        uint256 daysOfPool;
     }
 
     uint256 _totalPools;
@@ -122,6 +123,7 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
 
             require(startDate < endDate, "TStaking--> Start date connot be greater than the end date");
 
+        uint daysOfPool = getStakingDurationInDays(startDate, endDate);
         // Create a new stake pool
         StakePools memory newPool = StakePools({
             stakePoolId: stakePoolId,
@@ -132,7 +134,8 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
             poolTotalStakedAmount: 0,
             isPaused: false,
             minStakingAmount: minStakingAmount,
-            maxStakingLimit: maxStakingLimit
+            maxStakingLimit: maxStakingLimit,
+            daysOfPool:daysOfPool 
         });
 
         // set it
@@ -158,7 +161,7 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
     //gets the amount that the users wants 
     function stakeToken(address userAddress, uint256 _amount, string memory _stakePoolId) public nonReentrant{
         
-        console.log("---Stake Token---");
+        console.log("---Stake Token---", block.timestamp);
         //Some validations
         checkStakingConditions(userAddress, _amount, _stakePoolId);
 
@@ -209,58 +212,6 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
     }
 
    
-
-    //Total reward of a spesific stake in a pool.
-    function calculateTotalRewardsOfStake(address userAddress, string memory _stakePoolId, uint256 _stakeId) public view returns(uint256) {
-
-
-        console.log("----calculateTotalRewardsOfStake---" );
-
-        //     // Günlük Faiz Getirisi = (Anapara / 100) x (Faiz Oranı / 365) x Gün Sayısı​ Aylık 
-        //     // Faiz Getirisi = (Anapara / 100) x (Faiz Oranı / 12) x Ay Sayısı​ Yıllık Faiz
-        //     // Getirisi = (Anapara / 100) x (Faiz Oranı) x Yıl Sayısı​
-
-
-        // Staked amount
-        uint256 stakeAmount = _stakes[_stakePoolId][userAddress][_stakeId].stakeAmount;
-
-        // Start and end dates of the stake
-        // uint _stakeStartDate = _stakes[_stakePoolId][userAddress][_stakeId].startDate;
-        // uint _stakeEndDate = _stakes[_stakePoolId][userAddress][_stakeId].endDate;
-
-        uint stakePoolStartDate = _stakePool[_stakePoolId].startDate;
-        uint stakeStartDate = _stakes[_stakePoolId][userAddress][_stakeId].startDate;
-        uint stakePoolEndDate = _stakePool[_stakePoolId].endDate;
-
-
-        // APY of the pool
-
-        uint256 apyRate = _stakePool[_stakePoolId].apy;
-
-        uint256 elapsedTime = stakePoolEndDate - stakeStartDate;
-
-        // uint256 daysElapsed = elapsedTime / 86400; // seconds in a day
-        uint stakeDays = getStakingDurationInDays(stakeStartDate, stakePoolEndDate); 
-        uint totalStakePoolDays = getStakingDurationInDays(stakePoolStartDate, stakePoolEndDate); 
-
-
-        uint256 dailyRate = (apyRate * 1e18) / 36500; 
-
-        uint256 interestPerDay = stakeAmount * dailyRate / 1e20; 
-        uint256 totalRewardOfTheStake = interestPerDay * stakeDays;
-
-
-        console.log("amount --->", stakeAmount);
-        console.log("apy --->", apyRate);
-        console.log("elapsedTime --->", elapsedTime);
-        console.log("totalStakePoolDays --->", totalStakePoolDays);
-        console.log("_stakeDays --->", stakeDays);
-        console.log("dailyRate --->", dailyRate);
-        console.log("totalRewardOfTheStake --->", totalRewardOfTheStake);
-
-        return totalRewardOfTheStake;
-    }
-
     function calculateCurrentStakeRewardByStakeId(address userAddress, string memory _stakePoolId, uint256 _stakeId) public view returns(uint256) {
         console.log("calculateCurrentStakeRewardByStakeId");
 
@@ -306,7 +257,90 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
         return stakeAmount * dailyRate / 1e20;
     }
 
-    function claimReward(address userAddress, string memory _stakePoolId, uint256 _stakeId) public  returns(uint256){
+    //Total reward of a spesific stake in a pool.
+    function calculateTotalRewardsOfStake(address userAddress, string memory _stakePoolId, uint256 _stakeId) public view returns(uint256) {
+
+
+        console.log("----calculateTotalRewardsOfStake---" );
+
+        //     // Günlük Faiz Getirisi = (Anapara / 100) x (Faiz Oranı / 365) x Gün Sayısı​ Aylık 
+        //     // Faiz Getirisi = (Anapara / 100) x (Faiz Oranı / 12) x Ay Sayısı​ Yıllık Faiz
+        //     // Getirisi = (Anapara / 100) x (Faiz Oranı) x Yıl Sayısı​
+
+
+        // Staked amount
+        uint256 stakeAmount = _stakes[_stakePoolId][userAddress][_stakeId].stakeAmount;
+
+
+        uint stakePoolStartDate = _stakePool[_stakePoolId].startDate;
+        uint stakeStartDate = _stakes[_stakePoolId][userAddress][_stakeId].startDate;
+        uint stakePoolEndDate = _stakePool[_stakePoolId].endDate;
+
+
+        // APY of the pool
+
+        uint256 apyRate = _stakePool[_stakePoolId].apy;
+
+        uint256 elapsedTime = stakePoolEndDate - stakeStartDate;
+
+        // uint256 daysElapsed = elapsedTime / 86400; // seconds in a day
+        uint stakeDays = getStakingDurationInDays(stakeStartDate, stakePoolEndDate); 
+        uint totalStakePoolDays = getStakingDurationInDays(stakePoolStartDate, stakePoolEndDate); 
+
+
+        uint256 dailyRate = (apyRate * 1e18) / 36500; 
+
+        uint256 interestPerDay = stakeAmount * dailyRate / 1e20; 
+        uint256 totalRewardOfTheStake = interestPerDay * stakeDays;
+
+
+        console.log("amount --->", stakeAmount);
+        console.log("apy --->", apyRate);
+        console.log("elapsedTime --->", elapsedTime);
+        console.log("totalStakePoolDays --->", totalStakePoolDays);
+        console.log("_stakeDays --->", stakeDays);
+        console.log("dailyRate --->", dailyRate);
+        console.log("totalRewardOfTheStake --->", totalRewardOfTheStake);
+
+        return totalRewardOfTheStake;
+    }
+
+    // function test_calculateTotalRewardInStakePoolOfUser(address _userAddress, string memory _stakePoolId) public view{
+
+    //     uint countStakeOfPool = _allStakeIds.length;
+
+    //     console.log("=======calculateTotalRewardInStakePoolOfUser==>", block.timestamp, countStakeOfPool);
+
+    //          console.log("1 :", calculateCurrentStakeRewardByStakeId(_userAddress, _stakePoolId, 1)); 
+    //          console.log("2 :", calculateCurrentStakeRewardByStakeId(_userAddress, _stakePoolId, 2));
+    //         console.log("3 :", calculateCurrentStakeRewardByStakeId(_userAddress, _stakePoolId, 3));
+    //         console.log("4 :", calculateCurrentStakeRewardByStakeId(_userAddress, _stakePoolId, 4));
+
+    // }
+    function calculateTotalRewardInStakePoolOfUser(address _userAddress, string memory _stakePoolId) public view returns (uint256){
+
+        uint256 totalReward = 0;
+
+        uint countStakeOfPool = _allStakeIds.length;
+
+        console.log("=======calculateTotalRewardInStakePoolOfUser==>", block.timestamp, countStakeOfPool);
+
+
+        for(uint256 i = 1; i <= countStakeOfPool; i++){
+
+            uint256 stakeId = _stakes[_stakePoolId][_userAddress][i].stakeId;
+            uint256 rewardOfStake = calculateCurrentStakeRewardByStakeId(_userAddress, _stakePoolId, stakeId);
+            console.log("rewardOfStake-->", stakeId, rewardOfStake);
+
+            totalReward += rewardOfStake;
+        }
+
+        return totalReward;
+    }
+
+
+    function claimReward(address userAddress, string memory _stakePoolId, uint256 _stakeId) public returns(uint256){
+
 
         console.log("----Claim Token---");
         // _calculateRewards(userAddress, _stakePoolId);
@@ -378,27 +412,13 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
          _stakePool[_stakePoolId].isPaused = !_stakePool[_stakePoolId].isPaused;
     }
 
- //================== SOME UTILS  ========================
     
 
-    
-
-    //================== GETTERS ========================
 
     //Is the given user address is a stake holder?
     function isUserAStakeHoler(address userAddress, string memory _stakePoolId) external view returns(bool){
         return _users[_stakePoolId][userAddress].account == address(0);
     }
-
-
-    //Displayes user's estimated rewards
-    // function getUserEstimatedRewards(address userAddress, string memory _stakePoolId, bytes32 _stakeId) external view returns(uint256){
-
-    //     //calcs this estimated reward
-    //     uint amount = calculateUserEstimatedRewards(userAddress, _stakePoolId, _stakeId) ;
-
-    //     return _users[_stakePoolId][userAddress].rewardAmount + amount;
-    // }
 
     function getWithdrawableAmountOfContract() external view returns(uint256){
         return _token.balanceOf(address(this)) - _totalStakedTokensOfContract;
