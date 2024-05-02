@@ -44,8 +44,8 @@ describe('StakeTest Contract', function () {
     await stakeContract.createStakePool(
       'test1', //id
       'Test Stake Pool', //name
-      1714639885, //start
-      1746175885, //end
+      1714662933, //start
+      1746198933, //end
       5000, //apy
       parseUnits('100', 18), //min
       parseUnits('1000000', 18), //max
@@ -106,14 +106,13 @@ describe('StakeTest Contract', function () {
       stakeContratBalance,
     );
   });
-
   it('6. Stakes -->', async function () {
-    await updateTimestampAsDays(364);
-    const tx = await stakeContract.claimReward4Total(
-      user1.address, //user
+    const resp = await stakeContract.getAllUserStakesByStakePoolsId(
       'test1', //pool id
+
+      user1.address, //user
     );
-    await tx.wait(); // Wait for the transaction to be mined
+    console.log('Stakes Of User', resp);
   });
   // it('6. Stakes -->', async function () {
   //   await updateTimestampAsDays(364);
@@ -123,6 +122,15 @@ describe('StakeTest Contract', function () {
   //   );
   //   await tx.wait(); // Wait for the transaction to be mined
   // });
+
+  it('6. Stakes -->', async function () {
+    await updateTimestampAsDays(364);
+    const tx = await stakeContract.claimReward4Total(
+      user1.address, //user
+      'test1', //pool id
+    );
+    await tx.wait(); // Wait for the transaction to be mined
+  });
   it('Check final user balance and rewards', async () => {
     const finalBalance = await token.balanceOf(user1.address);
     console.log('Final User Balance: ', formatEther(finalBalance));
@@ -172,6 +180,16 @@ describe('StakeTest Contract', function () {
       stakeContratBalance,
     );
   });
+  // it('6. Hourly Stakes -->', async function () {
+  //   await updateTimestampAsDays(365);
+  //   const resp = await stakeContract.calculateRewardInSeconds(
+  //     user1.address, //user
+  //     'test1', //pool id
+  //     1,
+  //   );
+  //   console.log('On Year later Reward in secons --> ', formatUnits(resp, 18)); // Wait for the transaction to be mined
+  //   console.log(' Dayly--> ', formatEther(49863013698630136732n)); // Wait for the transaction to be mined
+  // });
 });
 
 const updateTimestampAsDays = async (days) => {

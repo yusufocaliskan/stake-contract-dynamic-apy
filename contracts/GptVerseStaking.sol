@@ -215,7 +215,6 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
 
         uint256 totalRewardWithAmount = _stakes[_stakePoolId][userAddress][_stakeId].totalRewardWithAmount;
 
-        uint256 stakeReward = _stakes[_stakePoolId][userAddress][_stakeId].stakeReward;
 
         // Fetch stake details
         uint256 stakeAmount = _stakes[_stakePoolId][userAddress][_stakeId].stakeAmount;
