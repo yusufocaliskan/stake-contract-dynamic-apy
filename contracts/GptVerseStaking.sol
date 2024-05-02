@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
+import "hardhat/console.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "hardhat/console.sol";
 
 contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
 
@@ -51,6 +51,8 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
 
     mapping( string => mapping ( address => mapping(uint256 => Stakes)) ) private _stakes;
     uint256[] private _allStakeIds;
+    mapping(string => mapping(address => uint256[])) private _userPoolStakeIds;
+
 
 
     //the user
@@ -205,7 +207,7 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
         _stakes[_stakePoolId][userAddress][stakeId].totalReward =totalReward; 
         _stakes[_stakePoolId][userAddress][stakeId].totalRewardWithAmount =totalReward+_amount; 
 
-        _allStakeIds.push(stakeId);
+        _userPoolStakeIds[_stakePoolId][userAddress].push(stakeId);       _allStakeIds.push(stakeId);
 
         //Throw an event
         emit Stake(userAddress, _amount);
@@ -305,18 +307,6 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
         return totalRewardOfTheStake;
     }
 
-    // function test_calculateTotalRewardInStakePoolOfUser(address _userAddress, string memory _stakePoolId) public view{
-
-    //     uint countStakeOfPool = _allStakeIds.length;
-
-    //     console.log("=======calculateTotalRewardInStakePoolOfUser==>", block.timestamp, countStakeOfPool);
-
-    //          console.log("1 :", calculateCurrentStakeRewardByStakeId(_userAddress, _stakePoolId, 1)); 
-    //          console.log("2 :", calculateCurrentStakeRewardByStakeId(_userAddress, _stakePoolId, 2));
-    //         console.log("3 :", calculateCurrentStakeRewardByStakeId(_userAddress, _stakePoolId, 3));
-    //         console.log("4 :", calculateCurrentStakeRewardByStakeId(_userAddress, _stakePoolId, 4));
-
-    // }
     function calculateTotalRewardInStakePoolOfUser(address _userAddress, string memory _stakePoolId) public view returns (uint256){
 
         uint256 totalReward = 0;
@@ -339,10 +329,10 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
     }
 
 
-    function claimReward(address userAddress, string memory _stakePoolId, uint256 _stakeId) public returns(uint256){
+    function claimReward4Each(address userAddress, string memory _stakePoolId, uint256 _stakeId) public returns(uint256){
 
 
-        console.log("----Claim Token---");
+        console.log("----Claim Token Each Stake---");
         // _calculateRewards(userAddress, _stakePoolId);
         uint256 rewardAmount = calculateCurrentStakeRewardByStakeId(userAddress, _stakePoolId, _stakeId);
 
@@ -356,6 +346,42 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
 
         emit ClaimReward(userAddress, rewardAmount);
         return rewardAmount;
+    }
+
+    function claimReward4Total(address userAddress, string memory _stakePoolId) public returns(uint256, uint256[] memory, uint256[] memory){
+
+        uint256[] memory relevantStakeIds = _userPoolStakeIds[_stakePoolId][userAddress];
+
+        uint countStakeOfPool = relevantStakeIds.length;
+        uint256[] memory stakeIds = new uint256[](countStakeOfPool);
+        uint256[] memory rewards = new uint256[](countStakeOfPool);
+
+
+
+        console.log("----claimReward4Total: Claim Token For Total---", countStakeOfPool);
+
+        uint256 rewardAmount = 0;
+
+        for(uint256 i = 0; i < countStakeOfPool; i++){
+
+            uint256 stakeId = relevantStakeIds[i];
+
+            stakeIds[i] = stakeId;
+            uint256 rewardOfStake = calculateCurrentStakeRewardByStakeId(userAddress, _stakePoolId, stakeId);
+            console.log("rewardOfStake-->", stakeId, rewardOfStake);
+
+            rewards[i] = rewardOfStake;
+            rewardAmount += rewardOfStake;
+        }
+
+        _token.transfer(userAddress, rewardAmount);
+
+        for(uint256 s=0; s < stakeIds.length; s++){
+            _stakes[_stakePoolId][userAddress][stakeIds[s]].stakeReward = rewards[s]; 
+        }
+
+        emit ClaimReward(userAddress, rewardAmount);
+        return (rewardAmount, stakeIds, rewards);
     }
 
     function isStakePoolEnded(string memory _stakePoolId) public view returns (bool) {
