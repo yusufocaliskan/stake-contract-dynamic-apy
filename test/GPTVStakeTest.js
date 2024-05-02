@@ -133,7 +133,7 @@ describe('StakeTest Contract', function () {
   //   console.log('Total Reward of The Pool', resp);
   // });
   it('6. Stakes -->', async function () {
-    await updateTimestampAsDays(364);
+    await updateTimestampAsDays(400);
 
     const resp = await stakeContract.claimReward4Total(
       user1.address, //user

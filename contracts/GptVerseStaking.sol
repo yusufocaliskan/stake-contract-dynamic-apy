@@ -202,7 +202,6 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
         //calculate the total reward for the current stake
         uint256 totalReward = calculateTotalRewardsOfStake(userAddress, _stakePoolId, stakeId);
 
-        console.log("totalReward--- Heree", totalReward);
         //update it
         _stakes[_stakePoolId][userAddress][stakeId].totalReward =totalReward; 
         _stakes[_stakePoolId][userAddress][stakeId].totalRewardWithAmount =totalReward+_amount; 
@@ -307,56 +306,48 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
         return totalRewardOfTheStake;
     }
 
-    function calculateTotalRewardInStakePoolOfUser(address _userAddress, string memory _stakePoolId) public view returns (uint256){
 
-        uint256 totalReward = 0;
+    function calculateTotalRewardInStakePoolOfUser(address userAddress, string memory _stakePoolId) public returns(uint256){
 
-        uint countStakeOfPool = _allStakeIds.length;
+        uint256[] memory relevantStakeIds = _userPoolStakeIds[_stakePoolId][userAddress];
 
-        console.log("=======calculateTotalRewardInStakePoolOfUser==>", block.timestamp, countStakeOfPool);
+        uint countStakeOfPool = relevantStakeIds.length;
+        uint256 rewardAmount = 0;
 
+        for(uint256 i = 0; i < countStakeOfPool; i++){
 
-        for(uint256 i = 1; i <= countStakeOfPool; i++){
+            uint256 stakeId = relevantStakeIds[i];
+            uint256 rewardOfStake = calculateCurrentStakeRewardByStakeId(userAddress, _stakePoolId, stakeId);
 
-            uint256 stakeId = _stakes[_stakePoolId][_userAddress][i].stakeId;
-            uint256 rewardOfStake = calculateCurrentStakeRewardByStakeId(_userAddress, _stakePoolId, stakeId);
-            console.log("rewardOfStake-->", stakeId, rewardOfStake);
+            _stakes[_stakePoolId][userAddress][stakeId].stakeReward = rewardOfStake; 
 
-            totalReward += rewardOfStake;
+            rewardAmount += rewardOfStake;
         }
-
-        return totalReward;
+        return rewardAmount;
     }
 
 
     function claimReward4Each(address userAddress, string memory _stakePoolId, uint256 _stakeId) public returns(uint256){
 
+        uint256 rewardAmount = 0;
 
-        console.log("----Claim Token Each Stake---");
-        // _calculateRewards(userAddress, _stakePoolId);
-        uint256 rewardAmount = calculateCurrentStakeRewardByStakeId(userAddress, _stakePoolId, _stakeId);
+        uint256 rewardOfStake = calculateCurrentStakeRewardByStakeId(userAddress, _stakePoolId, _stakeId);
 
+        _stakes[_stakePoolId][userAddress][_stakeId].stakeReward = rewardOfStake; 
 
-        console.log("Claim Token --> rewardAmount", rewardAmount);
-        _token.transfer(userAddress, rewardAmount);
+        rewardAmount += rewardOfStake;
 
-         _stakes[_stakePoolId][userAddress][_stakeId].lastStakeRewardTime = block.timestamp;
-         _stakes[_stakePoolId][userAddress][_stakeId].stakeReward = rewardAmount;
-
+        _token.transfer(userAddress, rewardOfStake);
 
         emit ClaimReward(userAddress, rewardAmount);
         return rewardAmount;
     }
 
-    function claimReward4Total(address userAddress, string memory _stakePoolId) public returns(uint256, uint256[] memory, uint256[] memory){
+    function claimReward4Total(address userAddress, string memory _stakePoolId) public returns(uint256){
 
         uint256[] memory relevantStakeIds = _userPoolStakeIds[_stakePoolId][userAddress];
 
         uint countStakeOfPool = relevantStakeIds.length;
-        uint256[] memory stakeIds = new uint256[](countStakeOfPool);
-        uint256[] memory rewards = new uint256[](countStakeOfPool);
-
-
 
         console.log("----claimReward4Total: Claim Token For Total---", countStakeOfPool);
 
@@ -366,38 +357,18 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
 
             uint256 stakeId = relevantStakeIds[i];
 
-            stakeIds[i] = stakeId;
             uint256 rewardOfStake = calculateCurrentStakeRewardByStakeId(userAddress, _stakePoolId, stakeId);
             console.log("rewardOfStake-->", stakeId, rewardOfStake);
 
-            rewards[i] = rewardOfStake;
+            _stakes[_stakePoolId][userAddress][stakeId].stakeReward = rewardOfStake; 
+
             rewardAmount += rewardOfStake;
         }
 
         _token.transfer(userAddress, rewardAmount);
 
-        for(uint256 s=0; s < stakeIds.length; s++){
-            _stakes[_stakePoolId][userAddress][stakeIds[s]].stakeReward = rewards[s]; 
-        }
-
         emit ClaimReward(userAddress, rewardAmount);
-        return (rewardAmount, stakeIds, rewards);
-    }
-
-    function isStakePoolEnded(string memory _stakePoolId) public view returns (bool) {
-        uint _stakePoolStartDate = _stakePool[_stakePoolId].startDate;
-        uint _stakePoolEndDate = _stakePool[_stakePoolId].endDate;
-        uint currentTime = block.timestamp;
-
-        uint elapsedTime = _stakePoolEndDate - _stakePoolStartDate; 
-        uint256 totalDays = elapsedTime / (60 * 60 * 24); 
-
-        console.log("Total Pool Duration (Days):", totalDays);
-        console.log("Current Time:", currentTime);
-        console.log("Pool End Time:", _stakePoolEndDate);
-
-        // Check if the current time is past the pool's end time
-        return currentTime > _stakePoolEndDate;
+        return rewardAmount;
     }
 
 
@@ -430,30 +401,14 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
         return _stakes[_stakePoolId][_userAddress][_stakeId];
     }
 
-    //================== SETTERS ========================
-    // ---- those functions  that could be used by the owner ----
-
     //Enabling or disabling the staking
     function toggleStakingStatus(string memory _stakePoolId) external onlyOwner{
          _stakePool[_stakePoolId].isPaused = !_stakePool[_stakePoolId].isPaused;
     }
 
     
-
-
-    //Is the given user address is a stake holder?
-    function isUserAStakeHoler(address userAddress, string memory _stakePoolId) external view returns(bool){
-        return _users[_stakePoolId][userAddress].account == address(0);
-    }
-
     function getWithdrawableAmountOfContract() external view returns(uint256){
         return _token.balanceOf(address(this)) - _totalStakedTokensOfContract;
-    }
-
-
-    //Return user's details by given address 
-    function getUserDetails(address userAddress, string memory _stakePoolId) external view returns(User memory){
-        return _users[_stakePoolId][userAddress];
     }
 
 
