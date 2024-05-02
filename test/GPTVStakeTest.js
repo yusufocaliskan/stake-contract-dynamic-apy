@@ -44,9 +44,9 @@ describe('StakeTest Contract', function () {
     await stakeContract.createStakePool(
       'test1', //id
       'Test Stake Pool', //name
-      1714669596, //start
-      1730567196, //end
-      50, //apy
+      1714671040, //start
+      1746207040, //end
+      5000, //apy 50%
       parseUnits('100', 18), //min
       parseUnits('1000000', 18), //max
     );
@@ -59,7 +59,7 @@ describe('StakeTest Contract', function () {
   });
 
   it('3. Stake Token to the Pool', async function () {
-    // await updateTimestampAsDays(300);
+    // await updateTimestampAsDays(10);
     // await updateTimestamp(1745599108);
     await stakeContract.stakeToken(
       user1.address, //user
@@ -82,6 +82,7 @@ describe('StakeTest Contract', function () {
       'test1', //pool id
     );
   });
+
   it('Balance OF the user After Staking --> ', async () => {
     const balance = await token.balanceOf(user1.address);
     const stakeContratBalance = await token.balanceOf(stakeAddress);
@@ -118,7 +119,7 @@ describe('StakeTest Contract', function () {
   // });
 
   it('6. Stakes -->', async function () {
-    await updateTimestampAsDays(184);
+    await updateTimestampAsDays(365);
     await stakeContract.claimReward4Total(
       user1.address, //user
       'test1', //pool id

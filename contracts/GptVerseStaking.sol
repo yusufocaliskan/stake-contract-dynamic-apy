@@ -117,7 +117,7 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
         uint apy,
         uint256 minStakingAmount,
         uint256 maxStakingLimit) public onlyOwner{
-            require(apy <= 100, "TStaking--> APY rate should be less then 100");
+            require(apy <= 10000, "TStaking--> APY rate should be less then 10000");
 
             require(startDate < endDate, "TStaking--> Start date connot be greater than the end date");
 
@@ -315,11 +315,10 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
     }
 
     // Function to calculate per-second interest
-    function calculatePerSecondInterest(uint256 stakeAmount, uint256 apy) internal pure returns (uint256) {
-        uint256 annualInterest = stakeAmount * apy / 100; 
+   function calculatePerSecondInterest(uint256 stakeAmount, uint256 apy) internal pure returns (uint256) {
+        uint256 annualInterest = stakeAmount * apy / 10000; 
 
         return annualInterest / (365 * 24 * 3600); 
-
     }
 
     function getStakingDurationInSeconds(uint256 _startTimestamp, uint256 _endTimestamp) public pure returns (uint256) {
