@@ -2,7 +2,22 @@ require('@nomicfoundation/hardhat-toolbox');
 module.exports = {
   defaultNetwork: 'hardhat',
   networks: {
-    hardhat: {},
+    hardhat: {
+      // mining: {
+      //   auto: false,
+      //   interval: [3000, 6000],
+      // },
+    },
+    sepolia: {
+      url: '--',
+
+      accounts: [
+        //Account 1
+        '--',
+        //SepoliaTest
+        '--',
+      ],
+    },
   },
   solidity: {
     version: '0.8.24',
@@ -13,6 +28,7 @@ module.exports = {
       },
     },
   },
+
   paths: {
     sources: './contracts',
     tests: './test',

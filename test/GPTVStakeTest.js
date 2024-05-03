@@ -1,4 +1,3 @@
-const { expect } = require('chai');
 const { parseUnits, formatEther, formatUnits } = require('ethers');
 const { ethers, network } = require('hardhat');
 
@@ -44,12 +43,22 @@ describe('StakeTest Contract', function () {
     await stakeContract.createStakePool(
       'test1', //id
       'Test Stake Pool', //name
-      1714709802, //start
-      1716869802, //end
-      1000, //apy 50%
+      1714733230, //start
+      1746269230, //end
+      5000, //apy 50%
       parseUnits('100', 18), //min
       parseUnits('1000000', 18), //max
     );
+  });
+  it('calculateStakeRewardWithDefinedAmount===', async () => {
+    // await updateTimestampAsDays(365);
+    const resp = await stakeContract.calculateStakeRewardWithDefinedAmount(
+      'test1', //pool id
+
+      parseUnits('100', 18), //amount
+    );
+
+    console.log('Rewad for---> : ', formatEther(resp));
   });
   it('1. Get Stake Pool By Id', async function () {
     const resp = await stakeContract.getStakePoolById(
@@ -63,7 +72,7 @@ describe('StakeTest Contract', function () {
     // await updateTimestamp(1745599108);
     await stakeContract.stakeToken(
       user1.address, //user
-      parseUnits('1000', 18), //amount
+      parseUnits('100', 18), //amount
       'test1', //pool id
     );
     // await stakeContract.stakeToken(
@@ -151,6 +160,7 @@ describe('StakeTest Contract', function () {
       formatEther(stakeContratBalance),
     );
   });
+
   // it('6. Hourly Stakes -->', async function () {
   //   await updateTimestampAsDays(365);
   //   const resp = await stakeContract.calculateRewardInSeconds(

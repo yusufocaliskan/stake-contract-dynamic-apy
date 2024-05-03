@@ -1,13 +1,19 @@
-# Sample Hardhat Project
+# Hardhat Project
 
-This project demonstrates a basic Hardhat use case. It comes with a sample contract, a test for that contract, and a Hardhat Ignition module that deploys that contract.
+run the below command to deploy the stake contract on sepolia network.
 
-Try running some of the following tasks:
+`npx hardhat run scripts/deployStakeContract.js  --network sepolia`
+
+Testing comman
+`npx hardhat test`
+
+Start the hardhat node on local (if you wish)
+`npx hardhat node`
+
+Others
 
 ```shell
 npx hardhat help
-npx hardhat test
 REPORT_GAS=true npx hardhat test
-npx hardhat node
 npx hardhat ignition deploy ./ignition/modules/Lock.js
 ```

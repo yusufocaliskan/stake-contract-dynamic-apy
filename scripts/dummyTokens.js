@@ -4,7 +4,7 @@ async function main() {
   //First Test Token
 
   //sepolia owner
-  const ownerAdress = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266';
+  const ownerAdress = '0xeB80Df01fc3a988E88a1f70a74e5e0a0E77c1408';
 
   const FirstToken = await hre.ethers.getContractFactory('FTT');
 

@@ -97,7 +97,7 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
     //Chekcs if the address has enought balance
     modifier whenTreasuryHasBalance(uint256 amount){
 
-        require(_token.balanceOf(address(this)) >= amount, "TStaking--> Insufficient funds in the treasury.");
+        require(_token.balanceOf(address(this)) >= amount, "Insufficient funds in the treasury.");
         _;
     }
 
@@ -117,9 +117,9 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
         uint apy,
         uint256 minStakingAmount,
         uint256 maxStakingLimit) public onlyOwner{
-            require(apy <= 10000, "TStaking--> APY rate should be less then 10000");
+            require(apy <= 10000, "APY rate should be less then 10000");
 
-            require(startDate < endDate, "TStaking--> Start date connot be greater than the end date");
+            require(startDate < endDate, "Start date connot be greater than the end date");
 
         uint daysOfPool = getStakingDurationInDays(startDate, endDate);
         // Create a new stake pool
@@ -157,7 +157,7 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
 
 
     //gets the amount that the users wants 
-    function stakeToken(address userAddress, uint256 _amount, string memory _stakePoolId) public nonReentrant{
+    function stakeToken(address userAddress, uint256 _amount, string memory _stakePoolId) public nonReentrant whenTreasuryHasBalance(_amount){
         
         //Some validations
         checkStakingConditions(userAddress, _amount, _stakePoolId);
@@ -412,7 +412,7 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
         for(uint256 i = 0; i < countStakeOfPool; i++){
 
             uint256 stakeId = relevantStakeIds[i];
-            uint256 rewardOfStake = calculateCurrentStakeRewardByStakeId(userAddress, _stakePoolId, stakeId);
+            uint256 rewardOfStake = calculateRewardInSeconds(userAddress, _stakePoolId, stakeId);
             console.log("rewardOfStake",rewardOfStake);
             rewardAmount += rewardOfStake;
         }
@@ -465,6 +465,24 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
         uint256 durationInSeconds = _endTimestamp - _startTimestamp;
         uint256 durationInDays = durationInSeconds / 60 / 60 / 24;
         return durationInDays;
+    }
+    
+    function calculateStakeRewardWithDefinedAmount(string memory _stakePoolId, uint256 stakeAmount) public view returns(uint256) {
+
+        uint256 stakeStartDate = block.timestamp;
+        uint256 stakeEndDate = _stakePool[_stakePoolId].endDate;
+
+        if (stakeEndDate <= stakeStartDate) {
+            return 0; 
+        }
+
+        uint256 totalStakeSeconds = getStakingDurationInSeconds(stakeStartDate, stakeEndDate);
+
+        uint256 perSecondInterest = calculatePerSecondInterest(stakeAmount, _stakePool[_stakePoolId].apy);
+
+        uint256 totalInterestReward = perSecondInterest * totalStakeSeconds;
+
+        return totalInterestReward;
     }
 
 
