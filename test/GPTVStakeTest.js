@@ -44,9 +44,9 @@ describe('StakeTest Contract', function () {
     await stakeContract.createStakePool(
       'test1', //id
       'Test Stake Pool', //name
-      1714671040, //start
-      1746207040, //end
-      5000, //apy 50%
+      1714709802, //start
+      1716869802, //end
+      1000, //apy 50%
       parseUnits('100', 18), //min
       parseUnits('1000000', 18), //max
     );
@@ -63,24 +63,24 @@ describe('StakeTest Contract', function () {
     // await updateTimestamp(1745599108);
     await stakeContract.stakeToken(
       user1.address, //user
-      parseUnits('100', 18), //amount
+      parseUnits('1000', 18), //amount
       'test1', //pool id
     );
-    await stakeContract.stakeToken(
-      user1.address, //user
-      parseUnits('100', 18), //amount
-      'test1', //pool id
-    );
-    await stakeContract.stakeToken(
-      user1.address, //user
-      parseUnits('100', 18), //amount
-      'test1', //pool id
-    );
-    await stakeContract.stakeToken(
-      user1.address, //user
-      parseUnits('100', 18), //amount
-      'test1', //pool id
-    );
+    // await stakeContract.stakeToken(
+    //   user1.address, //user
+    //   parseUnits('100', 18), //amount
+    //   'test1', //pool id
+    // );
+    // await stakeContract.stakeToken(
+    //   user1.address, //user
+    //   parseUnits('100', 18), //amount
+    //   'test1', //pool id
+    // );
+    // await stakeContract.stakeToken(
+    //   user1.address, //user
+    //   parseUnits('100', 18), //amount
+    //   'test1', //pool id
+    // );
   });
 
   it('Balance OF the user After Staking --> ', async () => {
@@ -182,9 +182,9 @@ describe('StakeTest Contract', function () {
 });
 
 const updateTimestampAsDays = async (days) => {
-  const fiveDaysLater =
+  const daysLater =
     (await ethers.provider.getBlock('latest')).timestamp + days * 86400;
-  await network.provider.send('evm_setNextBlockTimestamp', [fiveDaysLater]);
+  await network.provider.send('evm_setNextBlockTimestamp', [daysLater]);
   await network.provider.send('evm_mine');
 };
 const updateTimestamp = async (timeStamp) => {

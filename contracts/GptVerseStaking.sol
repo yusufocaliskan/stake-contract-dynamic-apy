@@ -296,6 +296,7 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
         uint256 durationInSeconds = getStakingDurationInSeconds(lastRewardTime, block.timestamp < stakeEndDate ? block.timestamp : stakeEndDate);
         uint256 totalStakeSeconds = getStakingDurationInSeconds(stakeStartDate, stakeEndDate);
 
+        console.log("durationInSeconds", durationInSeconds);
         // Calculate interest per second based on APY and stake amount
         uint256 perSecondInterest = calculatePerSecondInterest(stakeAmount, _stakePool[_stakePoolId].apy);
         uint256 perSecondPrincipalReturn = stakeAmount / totalStakeSeconds;
