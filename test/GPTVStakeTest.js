@@ -1,5 +1,7 @@
+const { expect } = require('chai');
 const { parseUnits, formatEther, formatUnits } = require('ethers');
 const { ethers, network } = require('hardhat');
+const { boolean } = require('hardhat/internal/core/params/argumentTypes');
 
 describe('StakeTest Contract', function () {
   let token, stakeContract, stakeAddress;
@@ -129,14 +131,33 @@ describe('StakeTest Contract', function () {
     console.log('Stakes Of User', resp);
   });
 
+  it(' Is Pool Exists -->', async function () {
+    const resp = await stakeContract.checkIsPoolExists(
+      'test1', //pool id
+    );
+
+    console.log('Result: test1 pool', resp);
+    expect(resp).equal(true);
+  });
+
+  it('withdraw token from contract', async () => {
+    await stakeContract.withdraw(user2.address, 1);
+  });
+
   it('New Balance of the user', async () => {
+    const balanceOfUser2 = await token.balanceOf(user2.address);
     const balance = await token.balanceOf(user1.address);
     const stakeContratBalance = await token.balanceOf(stakeAddress);
     console.log('NEw Balance Of User 1 : ', formatEther(balance));
+    console.log('NEw Balance Of User 2 : ', formatEther(balanceOfUser2));
     console.log(
       'New Balance BalanceOf Stake Contract 1 : ',
       formatEther(stakeContratBalance),
     );
+  });
+  it('getBalanceOfTheContract', async () => {
+    const balance = await stakeContract.getBalanceOfTheContract();
+    console.log('BalanceOf The Stake Contract : ', formatEther(balance));
   });
 
   it('Check final user balance and rewards', async () => {
