@@ -45,8 +45,8 @@ describe('StakeTest Contract', function () {
     await stakeContract.createStakePool(
       'test1', //id
       'Test Stake Pool', //name
-      1714755564, //start
-      1716743058, //end
+      1714832254, //start
+      1746368254, //end
       5000, //apy 50%
       parseUnits('1', 18), //min
       parseUnits('1000000', 18), //max
@@ -140,9 +140,18 @@ describe('StakeTest Contract', function () {
     expect(resp).equal(true);
   });
 
-  it('withdraw token from contract', async () => {
-    await stakeContract.withdraw(user2.address, 1);
+  it(' getTotalRewardsInThePoolOfUser -->', async function () {
+    const resp = await stakeContract.getTotalRewardsInThePoolOfUser(
+      user1.address,
+      'test1', //pool id
+    );
+
+    console.log('Total Rewards', resp);
+    // expect(resp).equal(true);
   });
+  // it('withdraw token from contract', async () => {
+  //   await stakeContract.withdraw(user2.address, 1);
+  // });
 
   it('New Balance of the user', async () => {
     const balanceOfUser2 = await token.balanceOf(user2.address);

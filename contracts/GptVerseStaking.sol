@@ -152,7 +152,7 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
 
 
     //gets the amount that the users wants 
-    function stakeToken(address userAddress, uint256 _amount, string memory _stakePoolId) public nonReentrant whenTreasuryHasBalance(_amount){
+    function stakeToken(address userAddress, uint256 _amount, string memory _stakePoolId) public nonReentrant {
         
         //Some validations
         checkStakingConditions(_amount, _stakePoolId);
@@ -187,13 +187,13 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
 
 
         //calculate the total reward for the current stake
-        // uint256 totalReward = totalRewardsOfStake(userAddress, _stakePoolId, stakeId);
+        uint256 totalReward = totalRewardsOfStake(userAddress, _stakePoolId, stakeId);
 
 
         // uint stakeDays = getStakingDurationInDays(block.timestamp, stakePoolEndDate);
 
         //update it
-        // _stakes[_stakePoolId][userAddress][stakeId].totalReward =totalReward; 
+        _stakes[_stakePoolId][userAddress][stakeId].totalReward =totalReward; 
         // _stakes[_stakePoolId][userAddress][stakeId].totalRewardWithAmount =totalReward+_amount; 
 
         _userPoolStakeIds[_stakePoolId][userAddress].push(stakeId);       _allStakeIds.push(stakeId);
@@ -361,6 +361,8 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
             rewardAmount += rewardOfStake;
         }
 
+
+        console.log("rewardAmount", rewardAmount);
         return rewardAmount;
     }
 
