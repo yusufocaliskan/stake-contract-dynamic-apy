@@ -348,7 +348,6 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
         uint256[] memory relevantStakeIds = _userPoolStakeIds[_stakePoolId][userAddress];
 
         uint countStakeOfPool = relevantStakeIds.length;
-
         uint256 rewardAmount = 0;
 
         for(uint256 i = 0; i < countStakeOfPool; i++){
@@ -358,9 +357,6 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
 
             rewardAmount += rewardOfStake;
         }
-
-
-        console.log("rewardAmount", rewardAmount);
         return rewardAmount;
     }
 
