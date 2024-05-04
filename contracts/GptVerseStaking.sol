@@ -293,15 +293,13 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
     //rewards for each stake
     function claimReward4Each(address userAddress, string memory _stakePoolId, uint256 _stakeId) public returns(uint256){
 
-        uint256 rewardAmount = 0;
 
-        uint256 rewardOfStake = calculateRewardInSeconds(userAddress, _stakePoolId, _stakeId);
+        uint256 rewardAmount = calculateRewardInSeconds(userAddress, _stakePoolId, _stakeId);
 
-        _stakes[_stakePoolId][userAddress][_stakeId].stakeReward = rewardOfStake; 
+        _stakes[_stakePoolId][userAddress][_stakeId].stakeReward = rewardAmount; 
 
-        rewardAmount += rewardOfStake;
 
-        _token.transfer(userAddress, rewardOfStake);
+        _token.transfer(userAddress, rewardAmount);
 
         _stakes[_stakePoolId][userAddress][_stakeId].lastStakeRewardTime = block.timestamp; 
 
