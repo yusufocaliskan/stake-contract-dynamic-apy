@@ -28,7 +28,6 @@ contract VestingSchedule is ReentrancyGuard, Ownable, AccessControl {
         uint startTimestamp;
         uint vestingSeconds;
         uint cliffSeconds;
-        uint gptvPrice;
         string privateAccount;
 
     }
@@ -59,17 +58,6 @@ contract VestingSchedule is ReentrancyGuard, Ownable, AccessControl {
     //swap
     ISwapRouter public constant swapRouter = ISwapRouter(0xE592427A0AEce92De3Edee1F18E0157C05861564);
         
-
-    // address public constant GPTV = 0x1F56eFffEe38EEeAE36cD38225b66c56E4D095a7; 
-    // address public constant USDT = 0xdAC17F958D2ee523a2206206994597C13D831ec7; 
-    // address public constant USDC = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48; 
-
-    address public constant DAI = 0x6B175474E89094C44Da98b954EedeAC495271d0F;
-    address public constant WETH9 = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
-    address public constant USDC = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
-
-    address public constant GPTV = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
-
     uint _gptvRate;
 
 
@@ -100,7 +88,7 @@ contract VestingSchedule is ReentrancyGuard, Ownable, AccessControl {
 
     //Creates new event 
      function createNewEvent(string memory eventName, string memory eventId, 
-     uint tgeRate, uint vestingSeconds, uint cliffSeconds, uint gptvPrice, string memory privateAccount) public onlyOwner {
+     uint tgeRate, uint vestingSeconds, uint cliffSeconds,  string memory privateAccount) public onlyOwner {
         if(_events[eventId].tgeRate > 0){
             revert("The event already exists.");
         }
@@ -112,7 +100,6 @@ contract VestingSchedule is ReentrancyGuard, Ownable, AccessControl {
                             startTimestamp,
                             vestingSeconds, 
                             cliffSeconds,
-                            gptvPrice,
                             privateAccount);
         _allEventIds.push(eventId);
     }
@@ -190,7 +177,6 @@ contract VestingSchedule is ReentrancyGuard, Ownable, AccessControl {
 
     function claim( string memory eventId, address account) public  nonReentrant {
 
-        
         if(_vestingSchedules[eventId][account].account == address(0x0)){
             revert("Vesting schedule does not exist for this account.");
         }
@@ -228,7 +214,6 @@ contract VestingSchedule is ReentrancyGuard, Ownable, AccessControl {
 
     }
 
-
     function setGPTVRate(uint rate) public onlyOwner(){
         _gptvRate = rate;
     }  
@@ -245,10 +230,11 @@ contract VestingSchedule is ReentrancyGuard, Ownable, AccessControl {
     //         emit VestingScheduleCanceled(account);
     //     }
 
-    function withdraw(address account, uint256 _amount) public  onlyOwner nonReentrant{
-        _token.transfer(account, _amount);
-    }
+    function withdraw(address account, uint256 _amount) public onlyOwner nonReentrant {
 
+        _token.approve(address(this), _amount);
+        _token.transferFrom(address(this), account, _amount);
+    }
     // GETTERS
 
     ///// global /////

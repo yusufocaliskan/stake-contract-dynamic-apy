@@ -442,7 +442,7 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
         return bytes(_stakePool[_stakePoolId].stakePoolId).length != 0;
     }
 
-    function generateId() public returns (uint256) {
+    function generateId() private returns (uint256) {
            idCounter++;
             return idCounter;
     }
@@ -451,7 +451,7 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
         return account == owner();
     }
 
-    function getTokenAddress() external view returns (address) {
+    function getTokenAddress() public view returns (address) {
         return address(_token);
     }
 
