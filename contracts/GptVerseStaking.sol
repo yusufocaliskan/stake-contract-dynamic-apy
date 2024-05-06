@@ -442,5 +442,9 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
            idCounter++;
             return idCounter;
     }
+
+    function isOwner(address account) public view returns (bool) {
+        return account == owner();
+    }
     
 }
