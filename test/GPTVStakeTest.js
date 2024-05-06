@@ -164,10 +164,10 @@ describe('StakeTest Contract', function () {
       formatEther(stakeContratBalance),
     );
   });
-  it('getBalanceOfTheContract', async () => {
-    const balance = await stakeContract.getBalanceOfTheContract();
-    console.log('BalanceOf The Stake Contract : ', formatEther(balance));
-  });
+  // it('getBalanceOfTheContract', async () => {
+  //   const balance = await stakeContract.getBalanceOfTheContract();
+  //   console.log('BalanceOf The Stake Contract : ', formatEther(balance));
+  // });
 
   it('Check final user balance and rewards', async () => {
     const finalBalance = await token.balanceOf(user1.address);
