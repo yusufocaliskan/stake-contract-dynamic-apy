@@ -51,6 +51,7 @@ contract VestingSchedule is ReentrancyGuard, Ownable, AccessControl {
     mapping( string => mapping ( address => VestingScheduleStruct) ) private _vestingSchedules;
 
     IERC20 private _token;
+    address _tokenAddress;
 
     uint private _totalAllocation;
     uint private _totalClaimedAllocation;
@@ -73,8 +74,10 @@ contract VestingSchedule is ReentrancyGuard, Ownable, AccessControl {
 
 
 
-    constructor ( address ownerAddress, address tokenAddress, uint gptvRate ) Ownable(ownerAddress) {
-        _token = IERC20(tokenAddress);
+    constructor ( address ownerAddress, address tokenAddress_, uint gptvRate ) Ownable(ownerAddress) {
+
+        _tokenAddress = tokenAddress_;
+        _token = IERC20(tokenAddress_);
 
         _gptvRate = gptvRate;
 
@@ -84,13 +87,15 @@ contract VestingSchedule is ReentrancyGuard, Ownable, AccessControl {
         //grant it to owner_role
         _grantRole(OWNER_ROLE, ownerAddress);
 
-
     }
 
     function isOwner(address account) public view returns (bool) {
         return account == owner();
     }
 
+    function setTokenAddress(address tokenAddress_) public  onlyOwner {
+        _tokenAddress = tokenAddress_;
+    }
     // FUNCTIONS
 
     //Creates new event 
@@ -172,6 +177,15 @@ contract VestingSchedule is ReentrancyGuard, Ownable, AccessControl {
 
         addVestingSchedule(account, allocation, eventId, vestingSeconds, cliffSeconds);
     }
+
+
+    function isUserExistsInTheEvent(address account, string memory eventId) public view returns (bool) {
+        if (_vestingSchedules[eventId][account].account != address(0)) {
+            return true;
+        }
+
+        return false;
+    }
     
 
     function claim( string memory eventId, address account) public  nonReentrant {
@@ -192,9 +206,6 @@ contract VestingSchedule is ReentrancyGuard, Ownable, AccessControl {
             _vestingSchedules[eventId][account].isClaimInTGE = true;
         }
 
-        
-
-        
         require(amount > 0, "No token to be claim.");
         _token.transfer(account, amount);
         
@@ -222,17 +233,21 @@ contract VestingSchedule is ReentrancyGuard, Ownable, AccessControl {
         _gptvRate = rate;
     }  
 
-   // function cancel(address account, string memory eventId) external onlyOwner {
+    //    function cancel(address account, string memory eventId) external onlyOwner {
 
-     //   uint unvestedAllocation = getUnvestedAmount( eventId, account);
+    //        uint unvestedAllocation = getUnvestedAmount( eventId, account);
 
-       // _vestingSchedules[eventId][account].allocation = _vestingSchedules[eventId][account].allocation - unvestedAllocation;
-       // _vestingSchedules[eventId][account].vestingSeconds = getElapsedVestingTime( eventId, account);
+    //        _vestingSchedules[eventId][account].allocation = _vestingSchedules[eventId][account].allocation - unvestedAllocation;
+    //        _vestingSchedules[eventId][account].vestingSeconds = getElapsedVestingTime( eventId, account);
 
-        //_totalAllocation -= unvestedAllocation;
+    //         _totalAllocation -= unvestedAllocation;
 
-        //emit VestingScheduleCanceled(account);
-    // }
+    //         emit VestingScheduleCanceled(account);
+    //     }
+
+    function withdraw(address account, uint256 _amount) public  onlyOwner nonReentrant{
+        _token.transfer(account, _amount);
+    }
 
     // GETTERS
 

@@ -88,6 +88,20 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
         _;
     }
 
+    function setTokenAddress(address tokenAddress_) public  onlyOwner {
+        _tokenAddress = tokenAddress_;
+    }
+
+
+    function transfer(address account, uint256 _amount) public onlyOwner nonReentrant {
+        _token.transfer(account, _amount);
+    }
+    function withdraw(address to, uint256 _amount) public onlyOwner {
+        uint256 balanceOf = _token.balanceOf(address(this)); 
+        require(_amount <= balanceOf, "Insufficient funds in the treasury.");
+        _token.transferFrom(address(this), to, _amount);
+    }
+
     //Initializer
     constructor( address initialOwner, address tokenAddress_) Ownable(initialOwner) 
         {
@@ -106,7 +120,6 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
         uint256 maxStakingLimit) public onlyOwner{
 
         bool isPoolExists = bytes(_stakePool[stakePoolId].stakePoolId).length != 0;
-
 
         require(apy <= 10000, "APY rate should be less then 10000");
 
@@ -424,15 +437,6 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
         return _totalUsers;
     }
 
-    function getBalanceOfTheContract() public view returns(uint256) {
-        return _token.balanceOf(address(this));
-    }
-
-    function withdraw(address to, uint256 _amount) public onlyOwner {
-        uint256 balanceOf = getBalanceOfTheContract(); 
-        require(_amount <= balanceOf, "Insufficient funds in the treasury.");
-        _token.transferFrom(address(this), to, _amount);
-    }
 
     function checkIsPoolExists(string memory _stakePoolId) public view returns(bool) {
         return bytes(_stakePool[_stakePoolId].stakePoolId).length != 0;
@@ -446,5 +450,11 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
     function isOwner(address account) public view returns (bool) {
         return account == owner();
     }
+
+    function getTokenAddress() external view returns (address) {
+        return address(_token);
+    }
+
+
     
 }

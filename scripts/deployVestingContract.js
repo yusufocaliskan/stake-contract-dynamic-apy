@@ -5,18 +5,19 @@ async function main() {
 
   //sepolia owner
   const ownerAdress = '0xeB80Df01fc3a988E88a1f70a74e5e0a0E77c1408';
-  const vestingContratOwner = '0xdA81C44a52272E5f9dbd6D63e04fD0A983267E0a';
+  // const vestingContratOwner = '0xdA81C44a52272E5f9dbd6D63e04fD0A983267E0a';
+  const tokenAddress = '0xe4670e22Da5e913c8B0Cf267d4d5c2bd7e8c15a5';
 
   //Local owner
   // const ownerAdress = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266';
 
-  const FirstToken = await hre.ethers.getContractFactory('FTT');
+  // const FirstToken = await hre.ethers.getContractFactory('FTT');
 
-  const firstToken = await FirstToken.deploy(ownerAdress);
-  console.log(
-    'First Token Contract Address (GPTV)',
-    await firstToken.getAddress(),
-  );
+  // const firstToken = await FirstToken.deploy(ownerAdress);
+  // console.log(
+  //   'First Token Contract Address (GPTV)',
+  //   await firstToken.getAddress(),
+  // );
 
   // //Second Token
   // const SeconToken = await hre.ethers.getContractFactory('STT');
@@ -31,8 +32,8 @@ async function main() {
 
   const gptvRate = 20;
   const vestingSchedule = await VestingSchedule.deploy(
-    vestingContratOwner,
-    await firstToken.getAddress(),
+    ownerAdress,
+    tokenAddress,
     gptvRate,
   );
 
