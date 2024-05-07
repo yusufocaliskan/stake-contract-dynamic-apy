@@ -20,6 +20,8 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
         bool isPaused;
         uint256 minStakingAmount;
         uint256 maxStakingLimit;
+        bool isDeleted;
+
     }
 
     uint256 _totalPools;
@@ -78,6 +80,7 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
     event ClaimReward(address indexed user, uint256 amount); //when clamin the reward
     event StakePoolCreated(string indexed stakePoolId, string name, uint startDate, uint endDate, uint apy, uint256 minStakingAmount, uint256 maxStakingLimit);
 
+    event StakePoolUpdated(string indexed stakePoolId, string name, uint startDate, uint endDate, uint apy, uint256 minStakingAmount, uint256 maxStakingLimit);
 
     //================== MODIFIERS ========================
 
@@ -139,7 +142,8 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
             poolTotalStakedAmount: 0,
             isPaused: false,
             minStakingAmount: minStakingAmount,
-            maxStakingLimit: maxStakingLimit
+            maxStakingLimit: maxStakingLimit,
+            isDeleted: false
             // daysOfPool:daysOfPool 
         });
 
@@ -155,6 +159,8 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
 
     function checkStakingConditions(uint256 _amount, string memory _stakePoolId) internal view {
 
+
+        require(_stakePool[_stakePoolId].isDeleted == false, "The pool has been deleted.");
         require(_amount > 0, "Stake amount must be non-zero.");
         require(!_stakePool[_stakePoolId].isPaused, "The stake is paused.");
         require(block.timestamp > _stakePool[_stakePoolId].startDate, "Staking not started yet");
@@ -404,8 +410,12 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
     }
 
     //Enabling or disabling the staking
-    function toggleStakingStatus(string memory _stakePoolId) external onlyOwner{
+    function toggleStakingStatus(string memory _stakePoolId) public onlyOwner{
          _stakePool[_stakePoolId].isPaused = !_stakePool[_stakePoolId].isPaused;
+    }
+
+    function setIsDeleted(string memory _stakePoolId) public onlyOwner{
+         _stakePool[_stakePoolId].isDeleted = !_stakePool[_stakePoolId].isDeleted;
     }
 
     function getStakingDurationInDays(uint256 _startTimestamp, uint256 _endTimestamp) public pure returns (uint256) {
@@ -453,6 +463,40 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
 
     function getTokenAddress() public view returns (address) {
         return address(_token);
+    }
+
+    function updateStakePool(
+        string memory stakePoolId,
+        string memory newName,
+        uint newStartDate,
+        uint newEndDate,
+        uint newApy,
+        uint256 newMinStakingAmount,
+        uint256 newMaxStakingLimit
+    ) public onlyOwner {
+        require(bytes(_stakePool[stakePoolId].stakePoolId).length != 0, "Stake pool not found");
+
+
+        require(newApy <= 10000, "APY rate should be less than 10000");
+        require(newStartDate < newEndDate, "Start date cannot be greater than the end date");
+
+        // Update the pool
+        _stakePool[stakePoolId].name = newName;
+        _stakePool[stakePoolId].startDate = newStartDate;
+        _stakePool[stakePoolId].endDate = newEndDate;
+        _stakePool[stakePoolId].apy = newApy;
+        _stakePool[stakePoolId].minStakingAmount = newMinStakingAmount;
+        _stakePool[stakePoolId].maxStakingLimit = newMaxStakingLimit;
+
+        emit StakePoolUpdated(
+            stakePoolId,
+            newName,
+            newStartDate,
+            newEndDate,
+            newApy,
+            newMinStakingAmount,
+            newMaxStakingLimit
+        );
     }
 
 

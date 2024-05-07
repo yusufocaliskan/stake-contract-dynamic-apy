@@ -19,12 +19,13 @@ contract VestingSchedule is ReentrancyGuard, Ownable, AccessControl {
     event VestingScheduleCanceled(address account);
 
     event AllocationClaimed(address account, uint amount, uint timestamp);
+    event EventCreated(string indexed eventName);
+    event EventUpdated(string indexed eventName);
     
     struct EventLookup {
         string eventName;
         string eventId;
         uint tgeRate;
-
         uint startTimestamp;
         uint vestingSeconds;
         uint cliffSeconds;
@@ -102,6 +103,7 @@ contract VestingSchedule is ReentrancyGuard, Ownable, AccessControl {
                             cliffSeconds,
                             privateAccount);
         _allEventIds.push(eventId);
+        emit EventCreated(eventName);
     }
 
     //Gets events detail by event id
@@ -218,17 +220,17 @@ contract VestingSchedule is ReentrancyGuard, Ownable, AccessControl {
         _gptvRate = rate;
     }  
 
-    //    function cancel(address account, string memory eventId) external onlyOwner {
+       function cancel(address account, string memory eventId) external onlyOwner {
 
-    //        uint unvestedAllocation = getUnvestedAmount( eventId, account);
+           uint unvestedAllocation = getUnvestedAmount( eventId, account);
 
-    //        _vestingSchedules[eventId][account].allocation = _vestingSchedules[eventId][account].allocation - unvestedAllocation;
-    //        _vestingSchedules[eventId][account].vestingSeconds = getElapsedVestingTime( eventId, account);
+           _vestingSchedules[eventId][account].allocation = _vestingSchedules[eventId][account].allocation - unvestedAllocation;
+           _vestingSchedules[eventId][account].vestingSeconds = getElapsedVestingTime( eventId, account);
 
-    //         _totalAllocation -= unvestedAllocation;
+            _totalAllocation -= unvestedAllocation;
 
-    //         emit VestingScheduleCanceled(account);
-    //     }
+            emit VestingScheduleCanceled(account);
+        }
 
     function withdraw(address account, uint256 _amount) public onlyOwner nonReentrant {
 
@@ -388,5 +390,28 @@ contract VestingSchedule is ReentrancyGuard, Ownable, AccessControl {
 
         return amountOut;
 
+    }
+    
+    function isEventExists( string memory eventId) public view returns(bool) {
+        if(_events[eventId].tgeRate > 0){
+            return true;
+        }
+        return false;
+
+    }
+
+     function updateEventById(string memory eventId, string memory eventName,  
+     uint tgeRate, uint vestingSeconds, uint cliffSeconds,  string memory privateAccount) public onlyOwner {
+
+        require(
+        keccak256(bytes(_events[eventId].eventId)) == keccak256(bytes(eventId)), "Event not found.");
+
+
+        _events[eventId].eventName = eventName;
+        _events[eventId].tgeRate = tgeRate;
+        _events[eventId].vestingSeconds = cliffSeconds;
+        _events[eventId].privateAccount = privateAccount;
+
+        emit EventUpdated(eventName);
     }
 }
