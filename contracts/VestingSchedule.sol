@@ -248,9 +248,15 @@ contract VestingSchedule is ReentrancyGuard, Ownable, AccessControl {
         return _token.balanceOf(address(this));
     }
 
-    function getTotalAllocation() external view returns (uint) {
+    function getTotalAllocation() public view returns (uint) {
         return _totalAllocation;
     }
+
+    function getRemainedResource() public view returns (uint) {
+        return _token.balanceOf(address(this))-_totalAllocation;
+    }
+
+
 
     function getTotalClaimedAllocation() external view returns (uint) {
         return _totalClaimedAllocation;
@@ -409,7 +415,8 @@ contract VestingSchedule is ReentrancyGuard, Ownable, AccessControl {
 
         _events[eventId].eventName = eventName;
         _events[eventId].tgeRate = tgeRate;
-        _events[eventId].vestingSeconds = cliffSeconds;
+        _events[eventId].vestingSeconds = vestingSeconds;
+        _events[eventId].cliffSeconds = cliffSeconds;
         _events[eventId].privateAccount = privateAccount;
 
         emit EventUpdated(eventName);
