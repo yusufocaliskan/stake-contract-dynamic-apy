@@ -442,6 +442,20 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
         return totalInterestReward;
     }
 
+    function calculateCustomizeableStakeReward(string memory _stakePoolId, uint256 _stakeAmount, uint256 _startDate, uint256 _endDate, uint256 _apyRate) public view returns(uint256) {
+
+        uint256 stakeStartDate = _startDate;
+        uint256 stakeEndDate = _endDate;
+
+        uint256 totalStakeSeconds = getStakingDurationInSeconds(stakeStartDate, stakeEndDate);
+
+        uint256 perSecondInterest = calculatePerSecondInterest(_stakeAmount, _apyRate);
+
+        uint256 totalInterestReward = perSecondInterest * totalStakeSeconds;
+
+        return totalInterestReward;
+    }
+
     //total number of the users that has staked
     function getCountOfUsers() public view returns(uint256) {
         return _totalUsers;
