@@ -1,6 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.12;
 
+import "hardhat/console.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
@@ -183,7 +184,7 @@ contract VestingSchedule is ReentrancyGuard, Ownable, AccessControl {
             revert("Vesting schedule does not exist for this account.");
         }
 
-        uint amount = getClaimableAmount(eventId, account);
+        uint256 amount = getClaimableAmount(eventId, account);
        
         if((amount != _vestingSchedules[eventId][account].allocation ) && _vestingSchedules[eventId][account].isClaimInTGE != true)
         {
@@ -275,33 +276,26 @@ contract VestingSchedule is ReentrancyGuard, Ownable, AccessControl {
 
     function getElapsedVestingTime( string memory eventId, address account) public view returns (uint) {
 
-        if(block.timestamp > getVestingMaturationTimestamp(eventId, account)){
+        uint maturationTime = getVestingMaturationTimestamp(eventId, account);
+        if(block.timestamp > maturationTime){
             return getVestingSeconds(account, eventId);
         }
         return block.timestamp - getStartTimestamp(account, eventId);
     }
 
+
     function getVestedAmount(string memory eventId, address account) public view returns (uint) {
-        uint vestingSeconds = getVestingSeconds(account, eventId);
-        if (vestingSeconds == 0) {
-            return 0; // No vesting period defined
-        }
-
-        uint startTimestamp = getStartTimestamp(account, eventId);
-        if (block.timestamp <= startTimestamp) {
-            return 0; // Vesting has not started yet
-        }
-
         uint totalAllocation = _vestingSchedules[eventId][account].allocation;
-        if (block.timestamp >= startTimestamp + vestingSeconds) {
-            return totalAllocation; // Entire amount has vested
-        }
+        uint elapsedVestingTime = getElapsedVestingTime(eventId, account);
+        uint vestingSeconds = getVestingSeconds(account, eventId);
 
-        // Calculate elapsed time relative to the vesting duration
-        uint elapsedVestingTime = block.timestamp - startTimestamp;
-        uint result=  (totalAllocation * elapsedVestingTime) / vestingSeconds; 
+        uint tgeAmount = calculateTGEAmount(account, eventId);
 
-        return result;
+        uint remainingAllocation = totalAllocation - tgeAmount;
+
+        uint vestedAmount = (remainingAllocation * elapsedVestingTime) / vestingSeconds;
+
+        return vestedAmount + tgeAmount;
     }
 
     function getUnvestedAmount(string memory eventId, address account) public view returns (uint) {
@@ -315,22 +309,23 @@ contract VestingSchedule is ReentrancyGuard, Ownable, AccessControl {
         return 0;
     }
 
-    function getClaimableAmount(string memory eventId, address account) public view returns (uint) {
+    function getClaimableAmount(string memory eventId, address account) public view returns (uint256) {
 
-        if (block.timestamp < (getStartTimestamp(account, eventId) + getCliffSeconds(account, eventId))) {
+        uint256 scheduleTime = (getStartTimestamp(account, eventId) + getCliffSeconds(account, eventId));
+        console.log("scheduleTime->",scheduleTime);
+        console.log("block.timestamp->",block.timestamp);
+        if (block.timestamp < scheduleTime) {
+            console.log("Here");
             return 0;
         }
 
         uint vestedAmount = getVestedAmount(eventId, account);
         uint claimedAmount = _vestingSchedules[eventId][account].claimedAmount;
 
-        if (vestedAmount >= claimedAmount) {
-            uint result = vestedAmount - claimedAmount;
-            return result;
-        } 
 
-        return 0;
-        
+        uint256 result = vestedAmount - claimedAmount;
+        return result;
+
     }
 
 
@@ -366,37 +361,37 @@ contract VestingSchedule is ReentrancyGuard, Ownable, AccessControl {
         return accountCliffSecs;
     }
 
-    //Swap 
-    function swapExactInputSingle(address tokenIn, address tokenOut, uint amountIn, string memory eventId) external nonReentrant returns(uint amountOut){
+    // //Swap 
+    // function swapExactInputSingle(address tokenIn, address tokenOut, uint amountIn, string memory eventId) external nonReentrant returns(uint amountOut){
 
 
-        // Get the transfer form user
-        TransferHelper.safeTransferFrom(tokenIn, msg.sender, address(this), amountIn);
+    //     // Get the transfer form user
+    //     TransferHelper.safeTransferFrom(tokenIn, msg.sender, address(this), amountIn);
 
-        // approve for token 
-        TransferHelper.safeApprove(tokenIn, address(swapRouter), amountIn);
+    //     // approve for token 
+    //     TransferHelper.safeApprove(tokenIn, address(swapRouter), amountIn);
         
-        // Swap params 
-        ISwapRouter.ExactInputSingleParams memory params = ISwapRouter.ExactInputSingleParams({
-            tokenIn: tokenIn,
-            tokenOut: tokenOut,
-            fee: 3000,
-            recipient: address(this),
-            // recipient: msg.sender,
-            deadline: block.timestamp + 1000,
-            amountIn: amountIn,
-            amountOutMinimum: 0,
-            sqrtPriceLimitX96: 0
-        });
+    //     // Swap params 
+    //     ISwapRouter.ExactInputSingleParams memory params = ISwapRouter.ExactInputSingleParams({
+    //         tokenIn: tokenIn,
+    //         tokenOut: tokenOut,
+    //         fee: 3000,
+    //         recipient: address(this),
+    //         // recipient: msg.sender,
+    //         deadline: block.timestamp + 1000,
+    //         amountIn: amountIn,
+    //         amountOutMinimum: 0,
+    //         sqrtPriceLimitX96: 0
+    //     });
 
-        // Swap yap ve GPTV token miktarını al
-        amountOut = swapRouter.exactInputSingle(params);
+    //     // Swap yap ve GPTV token miktarını al
+    //     amountOut = swapRouter.exactInputSingle(params);
 
-        addVestingSchedule(msg.sender, amountOut, eventId, 0, 0);
+    //     addVestingSchedule(msg.sender, amountOut, eventId, 0, 0);
 
-        return amountOut;
+    //     return amountOut;
 
-    }
+    // }
     
     function isEventExists( string memory eventId) public view returns(bool) {
         if(_events[eventId].tgeRate > 0){

@@ -28,9 +28,9 @@ module.exports = {
       // gasPrice: 20000000000,
       accounts: [
         //BncOwner
-        'ee074edc1640c22fced718a3bc83ef4521d94044e88f9ded058c6862d15a97e4',
+        '--',
         //BncTester
-        '85805116e6d268c83adeba6d664cd66b63d4a93886cd50baa01ce8fbde5b37f9',
+        '--',
       ],
     },
   },

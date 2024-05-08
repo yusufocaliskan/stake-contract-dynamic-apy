@@ -33,39 +33,65 @@ contract GPTVSwap is ReentrancyGuard  {
     //IERC20 private _token;
     IVestingSchedule private _vestingSchedule;
 
-
-    function swapExactInputSingle(uint amountIn) external nonReentrant returns (uint amountOut) {
-        TransferHelper.safeTransferFrom(DAI, msg.sender, address(this), amountIn);
-
-        // Approves the swapRouter to spend the token
-        TransferHelper.safeApprove(DAI, address(swapRouter), amountIn);
-        
-        // Sets up the swap parameters
-        ISwapRouter.ExactInputSingleParams memory params = ISwapRouter.ExactInputSingleParams({
-            tokenIn: DAI,
-            tokenOut: USDC,
-            fee: 3000,
-            recipient: msg.sender,
-            deadline: block.timestamp,
-            amountIn: amountIn,
-            amountOutMinimum: 0,
-            sqrtPriceLimitX96: 0
-        });
-
-        amountOut = swapRouter.exactInputSingle(params);
-    }
-
-
     // constructor ( address ownerAddress ) Ownable(ownerAddress) {
     //     //_token = IERC20(tokenAddress);
     //     address vestingContractAddress = 0xF1a8e0013bA4c02635295c311592a678162A3482;
     //     _vestingSchedule = IVestingSchedule(vestingContractAddress);
     // }
 
-    // function swap(address account, uint allocation, uint vestingSeconds, uint cliffSeconds, string memory eventId) external {
 
-    //     _vestingSchedule.addVestingSchedule( account,  allocation,  vestingSeconds, cliffSeconds, eventId);
+    // function swapExactInputSingle(uint amountIn) external nonReentrant returns (uint amountOut) {
+    //     TransferHelper.safeTransferFrom(DAI, msg.sender, address(this), amountIn);
 
+    //     // Approves the swapRouter to spend the token
+    //     TransferHelper.safeApprove(DAI, address(swapRouter), amountIn);
+        
+    //     // Sets up the swap parameters
+    //     ISwapRouter.ExactInputSingleParams memory params = ISwapRouter.ExactInputSingleParams({
+    //         tokenIn: DAI,
+    //         tokenOut: USDC,
+    //         fee: 3000,
+    //         recipient: msg.sender,
+    //         deadline: block.timestamp,
+    //         amountIn: amountIn,
+    //         amountOutMinimum: 0,
+    //         sqrtPriceLimitX96: 0
+    //     });
+
+    //     amountOut = swapRouter.exactInputSingle(params);
     // }
+
+    // //Swap 
+    function swapExactInputSingle(address tokenIn, address tokenOut, uint amountIn) external nonReentrant returns(uint amountOut){
+
+
+        // Get the transfer form user
+        TransferHelper.safeTransferFrom(tokenIn, msg.sender, address(this), amountIn);
+
+        // approve for token 
+        TransferHelper.safeApprove(tokenIn, address(swapRouter), amountIn);
+        
+        // Swap params 
+        ISwapRouter.ExactInputSingleParams memory params = ISwapRouter.ExactInputSingleParams({
+            tokenIn: tokenIn,
+            tokenOut: tokenOut,
+            fee: 3000,
+            recipient: address(this),
+            // recipient: msg.sender,
+            deadline: block.timestamp + 1000,
+            amountIn: amountIn,
+            amountOutMinimum: 0,
+            sqrtPriceLimitX96: 0
+        });
+
+        // Swap yap ve GPTV token miktarını al
+        amountOut = swapRouter.exactInputSingle(params);
+
+        // addVestingSchedule(msg.sender, amountOut, eventId, 0, 0);
+
+        return amountOut;
+
+    }
+    
 
 }
