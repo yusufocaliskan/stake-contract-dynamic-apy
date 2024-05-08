@@ -361,38 +361,6 @@ contract VestingSchedule is ReentrancyGuard, Ownable, AccessControl {
         return accountCliffSecs;
     }
 
-    // //Swap 
-    // function swapExactInputSingle(address tokenIn, address tokenOut, uint amountIn, string memory eventId) external nonReentrant returns(uint amountOut){
-
-
-    //     // Get the transfer form user
-    //     TransferHelper.safeTransferFrom(tokenIn, msg.sender, address(this), amountIn);
-
-    //     // approve for token 
-    //     TransferHelper.safeApprove(tokenIn, address(swapRouter), amountIn);
-        
-    //     // Swap params 
-    //     ISwapRouter.ExactInputSingleParams memory params = ISwapRouter.ExactInputSingleParams({
-    //         tokenIn: tokenIn,
-    //         tokenOut: tokenOut,
-    //         fee: 3000,
-    //         recipient: address(this),
-    //         // recipient: msg.sender,
-    //         deadline: block.timestamp + 1000,
-    //         amountIn: amountIn,
-    //         amountOutMinimum: 0,
-    //         sqrtPriceLimitX96: 0
-    //     });
-
-    //     // Swap yap ve GPTV token miktarını al
-    //     amountOut = swapRouter.exactInputSingle(params);
-
-    //     addVestingSchedule(msg.sender, amountOut, eventId, 0, 0);
-
-    //     return amountOut;
-
-    // }
-    
     function isEventExists( string memory eventId) public view returns(bool) {
         if(_events[eventId].tgeRate > 0){
             return true;
