@@ -242,6 +242,7 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
         // uint256 daysElapsed = elapsedTime / 86400; // seconds in a day
         uint stakeDays = getStakingDurationInDays(stakeStartDate, stakePoolEndDate); 
 
+        console.log("stakeDays", stakeDays);
 
         uint256 dailyRate = (apyRate * 1e18) / 36500; 
 
@@ -313,6 +314,10 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
     function claimReward4Each(address userAddress, string memory _stakePoolId, uint256 _stakeId) public returns(uint256){
 
 
+
+        require(block.timestamp > _stakePool[_stakePoolId].endDate, "Stake Pool has not ended yet.");
+
+
         uint256 rewardAmount = calculateRewardInSeconds(userAddress, _stakePoolId, _stakeId);
 
         _stakes[_stakePoolId][userAddress][_stakeId].stakeReward = rewardAmount; 
@@ -332,8 +337,9 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
         uint256[] memory relevantStakeIds = _userPoolStakeIds[_stakePoolId][userAddress];
 
         uint countStakeOfPool = relevantStakeIds.length;
-
         uint256 rewardAmount = 0;
+
+        require(block.timestamp > _stakePool[_stakePoolId].endDate, "Stake Pool has not ended yet.");
 
         for(uint256 i = 0; i < countStakeOfPool; i++){
 
