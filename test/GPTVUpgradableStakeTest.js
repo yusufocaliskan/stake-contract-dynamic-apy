@@ -18,8 +18,15 @@ describe('StakeTest Contract', function () {
 
     //Deploy staking contract
     const StakeContract = await ethers.getContractFactory('GptVerseStake');
-    stakeContract = await StakeContract.deploy(owner.address, tokenAddress);
+    stakeContract = await upgrades.deployProxy(
+      StakeContract,
+      [owner.address, tokenAddress],
+      { initializer: 'initialize' },
+    );
+
+    // stakeContract = await StakeContract.deploy(owner.address, tokenAddress);
     stakeAddress = await stakeContract.getAddress();
+    stakeContract = StakeContract.attach(stakeAddress);
 
     console.log('stakeAddress', stakeAddress);
 

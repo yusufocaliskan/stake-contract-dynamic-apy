@@ -18,7 +18,7 @@ async function main() {
   );
   console.log('Token Address:', tokenAddress);
   console.log('Owner Address:', ownerAddress);
-}
+  
 
 main()
   .then(() => process.exit(0))
