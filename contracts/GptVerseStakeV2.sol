@@ -9,7 +9,7 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol"; 
 
-contract GptVerseStake is ReentrancyGuardUpgradeable, OwnableUpgradeable, UUPSUpgradeable{
+contract GptVerseStakeV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable, UUPSUpgradeable{
 
     string public version;
 
@@ -111,11 +111,14 @@ contract GptVerseStake is ReentrancyGuardUpgradeable, OwnableUpgradeable, UUPSUp
         __UUPSUpgradeable_init();
         __ReentrancyGuard_init();
 
-        version = "v1.0";
+        version = "v2.0";
         _token = IERC20(tokenAddress_);
         _tokenAddress = tokenAddress_;
     }
 
+    function getVersion()public view returns(string memory){
+        return version;
+    }
 
     //Creates new Stake pool
     function createStakePool(string memory stakePoolId,
@@ -529,8 +532,6 @@ contract GptVerseStake is ReentrancyGuardUpgradeable, OwnableUpgradeable, UUPSUp
         );
     }
 
-    function getVersion()public view returns(string memory){
-        return version;
-    }
+
     
 }

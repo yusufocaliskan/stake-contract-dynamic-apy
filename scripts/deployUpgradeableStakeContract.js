@@ -18,11 +18,11 @@ async function main() {
   );
   console.log('Token Address:', tokenAddress);
   console.log('Owner Address:', ownerAddress);
-  
 
-main()
-  .then(() => process.exit(0))
-  .catch((error) => {
-    console.error(error);
-    process.exit(1);
-  });
+  main()
+    .then(() => process.exit(0))
+    .catch((error) => {
+      console.error(error);
+      process.exit(1);
+    });
+}
