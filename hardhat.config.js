@@ -1,4 +1,6 @@
 require('@nomicfoundation/hardhat-toolbox');
+const { mnemonic, bscscanApiKey } = require('./secret.json');
+
 module.exports = {
   defaultNetwork: 'hardhat',
   networks: {
@@ -18,10 +20,12 @@ module.exports = {
         '--',
       ],
     },
-    // bscMainnet: {
-    //   url: 'https://bsc-dataseed.binance.org/',
-    //   accounts: ['YOUR_BSC_PRIVATE_KEY'],
-    // },
+    bscMainnet: {
+      url: 'https://bsc-dataseed.binance.org/',
+      chainId: 56,
+      gasPrice: 20000000000,
+      accounts: { mnemonic: mnemonic },
+    },
     bscTestnet: {
       url: 'https://data-seed-prebsc-1-s1.bnbchain.org:8545',
       chainId: 97,
@@ -33,6 +37,9 @@ module.exports = {
         '--',
       ],
     },
+  },
+  etherscan: {
+    apiKey: bscscanApiKey,
   },
   solidity: {
     version: '0.8.24',

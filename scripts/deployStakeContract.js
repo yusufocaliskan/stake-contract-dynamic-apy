@@ -13,6 +13,7 @@ async function main() {
 
   console.log('Staking Contract Address', await stakeContract.getAddress());
   console.log('Token Address', tokenAddress);
+  console.log('Owner Address', ownerAdress);
 }
 
 main().catch((error) => {

@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "hardhat/console.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
@@ -101,15 +100,6 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
         _tokenAddress = tokenAddress_;
     }
 
-
-    function transfer(address account, uint256 _amount) public onlyOwner nonReentrant {
-        _token.transfer(account, _amount);
-    }
-    function withdraw(address to, uint256 _amount) public onlyOwner {
-        uint256 balanceOf = _token.balanceOf(address(this)); 
-        require(_amount <= balanceOf, "Insufficient funds in the treasury.");
-        _token.transferFrom(address(this), to, _amount);
-    }
 
     //Initializer
     constructor( address initialOwner, address tokenAddress_) Ownable(initialOwner) 
@@ -251,8 +241,6 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
         // uint256 daysElapsed = elapsedTime / 86400; // seconds in a day
         uint stakeDays = getStakingDurationInDays(stakeStartDate, stakePoolEndDate); 
 
-        console.log("stakeDays", stakeDays);
-
         uint256 dailyRate = (apyRate * 1e18) / 36500; 
 
         uint256 interestPerDay = stakeAmount * dailyRate / 1e20; 
@@ -290,8 +278,6 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
         // Calculate the duration in seconds
         uint256 durationInSeconds = getStakingDurationInSeconds(lastRewardTime, block.timestamp < stakeEndDate ? block.timestamp : stakeEndDate);
         uint256 totalStakeSeconds = getStakingDurationInSeconds(stakeStartDate, stakeEndDate);
-
-        console.log("durationInSeconds", durationInSeconds);
 
         // Calculate interest per second based on APY and stake amount
         uint256 perSecondInterest = calculatePerSecondInterest(stakeAmount, _stakePool[_stakePoolId].apy);
@@ -372,7 +358,6 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
         require(rewardAmount > 0,"No token to claim" );
         _token.transfer(userAddress, rewardAmount);
 
-        // console.log("Total Reward:", rewardAmount);
         emit ClaimReward(userAddress, rewardAmount);
         return rewardAmount;
     }
