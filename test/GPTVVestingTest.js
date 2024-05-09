@@ -54,14 +54,6 @@ describe('Vesting Schedule Contract', function () {
       30, //cliff
       '0x0', //privateAccount
     );
-    await vestingContract.createNewEvent(
-      'Pre Sale', //name
-      'pre-sale', //id
-      50, //tge
-      400, //vesting
-      30, //cliff
-      '0x0', //privateAccount
-    );
   });
 
   it(' Get All Events', async function () {
@@ -93,13 +85,12 @@ describe('Vesting Schedule Contract', function () {
 
   it('Before Cliff Started. Should give the TGE amount', async function () {
     const currentTime = (await ethers.provider.getBlock('latest')).timestamp;
-
     const resp = await vestingContract.claim(
       'event1',
       user1.address, //id
     );
   });
-  it('After TGE, should return 0 amount', async function () {
+  it('Before Cliff Started. Should give the TGE amount', async function () {
     const currentTime = (await ethers.provider.getBlock('latest')).timestamp;
     await updateTimestamp(currentTime + 6000);
     const resp = await vestingContract.claim(
@@ -107,43 +98,6 @@ describe('Vesting Schedule Contract', function () {
       user1.address, //id
     );
   });
-  // it('After cliff time start', async function () {
-  //   const currentTime = (await ethers.provider.getBlock('latest')).timestamp;
-  //   await updateTimestamp(currentTime + 30);
-  //   const resp = await vestingContract.claim(
-  //     'event1',
-  //     user1.address, //id
-  //   );
-  // });
-
-  // it('Second CLAIMM after Cliff', async function () {
-  //   const currentTime = (await ethers.provider.getBlock('latest')).timestamp;
-
-  //   await updateTimestamp(currentTime + 1900);
-  //   const resp = await vestingContract.claim(
-  //     'event1',
-  //     user1.address, //id
-  //   );
-  // });
-  // it('Second CLAIMM after Cliff', async function () {
-  //   const currentTime = (await ethers.provider.getBlock('latest')).timestamp;
-
-  //   await updateTimestamp(currentTime + 10000);
-
-  //   const resp = await vestingContract.claim(
-  //     'event1',
-  //     user1.address, //id
-  //   );
-  // });
-  // it('Second CLAIMM after Cliff', async function () {
-  //   const currentTime = (await ethers.provider.getBlock('latest')).timestamp;
-
-  //   await updateTimestamp(currentTime + 600000);
-  //   const resp = await vestingContract.claim(
-  //     'event1',
-  //     user1.address, //id
-  //   );
-  // });
 
   it('getVestingSchedule', async function () {
     const resp = await vestingContract.getVestingSchedule(

@@ -296,68 +296,66 @@ contract VestingSchedule is ReentrancyGuard, Ownable, AccessControl {
 
 
     function getVestedAmount(string memory eventId, address account) public view returns (uint) {
-        uint totalAllocation = _vestingSchedules[eventId][account].allocation;
+        VestingScheduleStruct memory schedule = _vestingSchedules[eventId][account];
         uint elapsedVestingTime = getElapsedVestingTime(eventId, account);
         uint vestingSeconds = getVestingSeconds(account, eventId);
-        uint claimedAmount = _vestingSchedules[eventId][account].claimedAmount;
 
+        uint totalAllocation = schedule.allocation;
         uint tgeAmount = calculateTGEAmount(account, eventId);
-
         uint remainingAllocation = totalAllocation - tgeAmount;
 
+        // If the cliff period has not passed, no amount is vested beyond TGE
+        uint cliffTime = getStartTimestamp(account, eventId) + getCliffSeconds(account, eventId);
+        if (block.timestamp < cliffTime) {
+            return schedule.isClaimInTGE ? 0 : tgeAmount;
+        }
+
+        // After the cliff, calculate the vested amount 
         uint vestedAmount = (remainingAllocation * elapsedVestingTime) / vestingSeconds;
 
-        
-        if(!_vestingSchedules[eventId][account].isClaimInTGE){
-            vestedAmount = (totalAllocation * elapsedVestingTime) / vestingSeconds;
+        // Include TGE if it hasn't been claimed
+        if (!schedule.isClaimInTGE) {
+            vestedAmount += tgeAmount;
         }
 
-        if(claimedAmount == totalAllocation){
-            return 0;
-        }
-         
         return vestedAmount;
     }
 
+
     
-
     function getClaimableAmount(string memory eventId, address account) public view returns (uint256) {
+        VestingScheduleStruct memory schedule = _vestingSchedules[eventId][account];
+        uint claimedAmount = schedule.claimedAmount;
+        uint allocation = schedule.allocation;
 
-        uint claimedAmount = _vestingSchedules[eventId][account].claimedAmount;
-        uint allocation = _vestingSchedules[eventId][account].allocation;
-        if(claimedAmount >= allocation){
+        // If all tokens have been claimed, nothing is left to claim
+        if (claimedAmount >= allocation) {
             return 0;
         }
- 
 
-        uint256 cliffTime = (getStartTimestamp(account, eventId) + getCliffSeconds(account, eventId));
-        bool isClaimInTGE = _vestingSchedules[eventId][account].isClaimInTGE;
-        bool isCliffTime = block.timestamp > cliffTime;
- 
+        uint cliffTime = getStartTimestamp(account, eventId) + getCliffSeconds(account, eventId);
+        bool isClaimInTGE = schedule.isClaimInTGE;
+        bool isCliffPassed = block.timestamp >= cliffTime;
 
-        uint vestedAmount = getVestedAmount(eventId, account);
-       
         uint tgeAmount = calculateTGEAmount(account, eventId);
- 
-      
-        uint256 result = vestedAmount ;
-        
-        
-        if (!isCliffTime) {
-            result = 0;
+        uint vestedAmount = getVestedAmount(eventId, account);
+
+        uint256 claimableAmount;
+        if (!isCliffPassed) {
+            // Before the cliff, only TGE is claimable if not yet claimed
+            claimableAmount = isClaimInTGE ? 0 : tgeAmount;
+        } else {
+            claimableAmount = vestedAmount;
         }
 
-        if (!isCliffTime && !isClaimInTGE) {
-            result = tgeAmount;
+        // Ensure the claimable amount doesn't exceed the remaining allocation
+        if (claimedAmount + claimableAmount > allocation) {
+            claimableAmount = allocation - claimedAmount;
         }
 
-        if (isCliffTime && !isClaimInTGE) {
-            result = vestedAmount+tgeAmount;
-        }
-
-        return result;
-
+        return claimableAmount;
     }
+
 
 
     function getStartTimestamp(address account, string memory eventId) private view returns(uint){
