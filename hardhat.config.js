@@ -1,4 +1,5 @@
 require('@nomicfoundation/hardhat-toolbox');
+require('@openzeppelin/hardhat-upgrades');
 const { mnemonic, bscscanApiKey } = require('./secret.json');
 
 module.exports = {

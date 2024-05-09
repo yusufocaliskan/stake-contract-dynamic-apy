@@ -2,12 +2,16 @@
 pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
+import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol"; 
 
+contract GptVerseStake is ReentrancyGuardUpgradeable, OwnableUpgradeable, UUPSUpgradeable{
+
+    string public version;
 
     struct StakePools{
         string stakePoolId;
@@ -99,13 +103,17 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
     function setTokenAddress(address tokenAddress_) public  onlyOwner {
         _tokenAddress = tokenAddress_;
     }
+    
+    function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
 
+    function initialize(address initialOwner, address tokenAddress_) public initializer {
+        __Ownable_init(initialOwner);
+        __UUPSUpgradeable_init();
+        __ReentrancyGuard_init();
 
-    //Initializer
-    constructor( address initialOwner, address tokenAddress_) Ownable(initialOwner) 
-        {
-            _token = IERC20(tokenAddress_);
-            _tokenAddress = tokenAddress_;
+        version = "v1.0";
+        _token = IERC20(tokenAddress_);
+        _tokenAddress = tokenAddress_;
     }
 
 

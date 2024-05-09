@@ -7,7 +7,7 @@ async function main() {
   const tokenAddress = '0xc8c6414184D3cc65190068C4A12F793AB24cd3F8';
 
   //Deploy vesting schedule
-  const StakeContract = await hre.ethers.getContractFactory('GptVerseStaking');
+  const StakeContract = await hre.ethers.getContractFactory('GptVerseStake');
 
   const stakeContract = await StakeContract.deploy(ownerAdress, tokenAddress);
 
