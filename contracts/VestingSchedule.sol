@@ -186,12 +186,12 @@ contract VestingSchedule is ReentrancyGuard, Ownable, AccessControl {
 
         uint256 amount = getClaimableAmount(eventId, account);
        
-        if((amount != _vestingSchedules[eventId][account].allocation ) && _vestingSchedules[eventId][account].isClaimInTGE != true)
+        if( _vestingSchedules[eventId][account].isClaimInTGE != true)
         {
             //Calculate TgE Amount 
-            uint tgeAmount = calculateTGEAmount(account, eventId); 
+            // uint tgeAmount = calculateTGEAmount(account, eventId); 
  
-            amount +=tgeAmount;
+            // amount +=tgeAmount;
             _vestingSchedules[eventId][account].isClaimInTGE = true;
         }
 
@@ -283,21 +283,6 @@ contract VestingSchedule is ReentrancyGuard, Ownable, AccessControl {
         return block.timestamp - getStartTimestamp(account, eventId);
     }
 
-
-    function getVestedAmount(string memory eventId, address account) public view returns (uint) {
-        uint totalAllocation = _vestingSchedules[eventId][account].allocation;
-        uint elapsedVestingTime = getElapsedVestingTime(eventId, account);
-        uint vestingSeconds = getVestingSeconds(account, eventId);
-
-        uint tgeAmount = calculateTGEAmount(account, eventId);
-
-        uint remainingAllocation = totalAllocation - tgeAmount;
-
-        uint vestedAmount = (remainingAllocation * elapsedVestingTime) / vestingSeconds;
-
-        return vestedAmount + tgeAmount;
-    }
-
     function getUnvestedAmount(string memory eventId, address account) public view returns (uint) {
         uint vestedAmount = getVestedAmount(eventId, account);
         uint allocation = _vestingSchedules[eventId][account].allocation;
@@ -309,21 +294,67 @@ contract VestingSchedule is ReentrancyGuard, Ownable, AccessControl {
         return 0;
     }
 
-    function getClaimableAmount(string memory eventId, address account) public view returns (uint256) {
 
-        uint256 scheduleTime = (getStartTimestamp(account, eventId) + getCliffSeconds(account, eventId));
-        console.log("scheduleTime->",scheduleTime);
-        console.log("block.timestamp->",block.timestamp);
-        if (block.timestamp < scheduleTime) {
-            console.log("Here");
-            return 0;
-        }
-
-        uint vestedAmount = getVestedAmount(eventId, account);
+    function getVestedAmount(string memory eventId, address account) public view returns (uint) {
+        uint totalAllocation = _vestingSchedules[eventId][account].allocation;
+        uint elapsedVestingTime = getElapsedVestingTime(eventId, account);
+        uint vestingSeconds = getVestingSeconds(account, eventId);
         uint claimedAmount = _vestingSchedules[eventId][account].claimedAmount;
 
+        uint tgeAmount = calculateTGEAmount(account, eventId);
 
-        uint256 result = vestedAmount - claimedAmount;
+        uint remainingAllocation = totalAllocation - tgeAmount;
+
+        uint vestedAmount = (remainingAllocation * elapsedVestingTime) / vestingSeconds;
+
+        
+        if(!_vestingSchedules[eventId][account].isClaimInTGE){
+            vestedAmount = (totalAllocation * elapsedVestingTime) / vestingSeconds;
+        }
+
+        if(claimedAmount == totalAllocation){
+            return 0;
+        }
+         
+        return vestedAmount;
+    }
+
+    
+
+    function getClaimableAmount(string memory eventId, address account) public view returns (uint256) {
+
+        uint claimedAmount = _vestingSchedules[eventId][account].claimedAmount;
+        uint allocation = _vestingSchedules[eventId][account].allocation;
+        if(claimedAmount >= allocation){
+            return 0;
+        }
+ 
+
+        uint256 cliffTime = (getStartTimestamp(account, eventId) + getCliffSeconds(account, eventId));
+        bool isClaimInTGE = _vestingSchedules[eventId][account].isClaimInTGE;
+        bool isCliffTime = block.timestamp > cliffTime;
+ 
+
+        uint vestedAmount = getVestedAmount(eventId, account);
+       
+        uint tgeAmount = calculateTGEAmount(account, eventId);
+ 
+      
+        uint256 result = vestedAmount ;
+        
+        
+        if (!isCliffTime) {
+            result = 0;
+        }
+
+        if (!isCliffTime && !isClaimInTGE) {
+            result = tgeAmount;
+        }
+
+        if (isCliffTime && !isClaimInTGE) {
+            result = vestedAmount+tgeAmount;
+        }
+
         return result;
 
     }

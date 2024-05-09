@@ -90,86 +90,61 @@ describe('Vesting Schedule Contract', function () {
     );
     console.log('User 1 Vesting', resp);
   });
-  // it('First Claim', async function () {
-  //   const currentTime = (await ethers.provider.getBlock('latest')).timestamp;
-  //   // await updateTimestamp(currentTime );
-  //   const resp = await vestingContract.claim(
-  //     'event1',
-  //     user1.address, //id
-  //   );
-  // });
 
-  it('First Claim in TGE', async function () {
+  it('Before Cliff Started. Should give the TGE amount', async function () {
     const currentTime = (await ethers.provider.getBlock('latest')).timestamp;
-    // await updateTimestamp(currentTime + 6000);
-    const resp = await vestingContract.claim(
-      'event1',
-      user1.address, //id
-    );
-  });
-
-  it('Second Claim after Cliff time: ', async function () {
-    const currentTime = (await ethers.provider.getBlock('latest')).timestamp;
-    await updateTimestamp(currentTime + 29);
 
     const resp = await vestingContract.claim(
       'event1',
       user1.address, //id
     );
   });
-  it('Second Claim after Cliff time: ', async function () {
+  it('After TGE, should return 0 amount', async function () {
     const currentTime = (await ethers.provider.getBlock('latest')).timestamp;
-    await updateTimestamp(currentTime + 109);
-
+    await updateTimestamp(currentTime + 6000);
     const resp = await vestingContract.claim(
       'event1',
       user1.address, //id
     );
   });
-  it('Second Claim after Cliff time: ', async function () {
-    const currentTime = (await ethers.provider.getBlock('latest')).timestamp;
-    await updateTimestamp(currentTime + 5858);
-
-    const resp = await vestingContract.claim(
-      'event1',
-      user1.address, //id
-    );
-  });
-  it('Second Claim after Cliff time: ', async function () {
-    const currentTime = (await ethers.provider.getBlock('latest')).timestamp;
-    await updateTimestamp(currentTime + 1);
-
-    const resp = await vestingContract.claim(
-      'event1',
-      user1.address, //id
-    );
-  });
-  // it('Second Claim after Cliff time: ', async function () {
-  //   const currentTime = (await ethers.provider.getBlock('latest')).timestamp;
-  //   await updateTimestamp(currentTime + 100);
-  //   const resp = await vestingContract.claim(
-  //     'event1',
-  //     user1.address, //id
-  //   );
-  // });
-  // it('Second Claim', async function () {
+  // it('After cliff time start', async function () {
   //   const currentTime = (await ethers.provider.getBlock('latest')).timestamp;
   //   await updateTimestamp(currentTime + 30);
+  //   const resp = await vestingContract.claim(
+  //     'event1',
+  //     user1.address, //id
+  //   );
+  // });
+
+  // it('Second CLAIMM after Cliff', async function () {
+  //   const currentTime = (await ethers.provider.getBlock('latest')).timestamp;
+
+  //   await updateTimestamp(currentTime + 1900);
+  //   const resp = await vestingContract.claim(
+  //     'event1',
+  //     user1.address, //id
+  //   );
+  // });
+  // it('Second CLAIMM after Cliff', async function () {
+  //   const currentTime = (await ethers.provider.getBlock('latest')).timestamp;
+
+  //   await updateTimestamp(currentTime + 10000);
 
   //   const resp = await vestingContract.claim(
   //     'event1',
   //     user1.address, //id
   //   );
   // });
-  // it('Claim', async function () {
+  // it('Second CLAIMM after Cliff', async function () {
   //   const currentTime = (await ethers.provider.getBlock('latest')).timestamp;
-  //   // await updateTimestamp(currentTime);
-  //   const resp = await vestingContract.getClaimableAmount(
+
+  //   await updateTimestamp(currentTime + 600000);
+  //   const resp = await vestingContract.claim(
   //     'event1',
   //     user1.address, //id
   //   );
-  //   console.log('resp--->getClaimableAmount--> ', formatEther(resp.toString()));
   // });
+
   it('getVestingSchedule', async function () {
     const resp = await vestingContract.getVestingSchedule(
       'event1',
@@ -178,15 +153,7 @@ describe('Vesting Schedule Contract', function () {
     console.log(resp);
     console.log('Claimed Amount', formatEther(resp[5].toString()));
   });
-  // it('Claim', async function () {
-  //   const currentTime = (await ethers.provider.getBlock('latest')).timestamp;
-  //   console.log('currentTime', currentTime + 30);
-  //   await updateTimestamp(currentTime + 300);
-  //   const resp = await vestingContract.claim(
-  //     'event1',
-  //     user1.address, //id
-  //   );
-  // });
+
   it('New Balance of the user', async () => {
     const balanceOfUser2 = await token.balanceOf(user2.address);
     const balance = await token.balanceOf(user1.address);
