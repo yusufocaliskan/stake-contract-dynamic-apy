@@ -45,13 +45,19 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
 
         //the reward that would be given to the user at the end of the stake time (the pool time)
         uint256 totalReward; 
+        address userAddress; 
     }
 
     uint256 private idCounter;
 
     mapping( string => mapping ( address => mapping(uint256 => Stakes)) ) private _stakes;
+
     uint256[] private _allStakeIds;
+
     mapping(string => mapping(address => uint256[])) private _userPoolStakeIds;
+
+    mapping(string => Stakes[]) private _stakesInPool;
+
 
     //the user
     struct User{
@@ -153,6 +159,7 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
         _allStakePools.push(stakePoolId);
         _allStakePoolIds.push(stakePoolId);
 
+
         emit StakePoolCreated(stakePoolId, name, startDate, endDate, apy, minStakingAmount, maxStakingLimit);
 
     }
@@ -197,7 +204,8 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
                 startDate: block.timestamp,
                 stakeAmount: _amount,
                 stakeReward: 0,
-                totalReward: 0 
+                totalReward: 0, 
+                userAddress: userAddress 
         });
         _stakes[_stakePoolId][userAddress][stakeId] = newStake;
 
@@ -209,6 +217,7 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
         uint256 totalReward = totalRewardsOfStake(userAddress, _stakePoolId, stakeId);
 
 
+        _stakesInPool[_stakePoolId].push(newStake);
         // uint stakeDays = getStakingDurationInDays(block.timestamp, stakePoolEndDate);
 
         //update it
@@ -485,6 +494,13 @@ contract GptVerseStaking is Initializable, ReentrancyGuard, Ownable{
         return address(_token);
     }
 
+    function listAllStakesInPool(string memory stakePoolId) public view returns (Stakes[] memory) {
+        return _stakesInPool[stakePoolId];
+    }
+
+    function lengthStakesInPool(string memory stakePoolId) public view returns (uint) {
+        return _stakesInPool[stakePoolId].length;
+    }
        
     function updateStakePool(
         string memory stakePoolId,

@@ -41,7 +41,7 @@ describe('StakeTest Contract', function () {
     console.log('Current time', currentTime.timestamp);
   });
 
-  it('1. Create New Stake Pool', async function () {
+  it('Create New Stake Pool', async function () {
     await stakeContract.createStakePool(
       'test1', //id
       'Test Stake Pool', //name
@@ -62,14 +62,14 @@ describe('StakeTest Contract', function () {
 
     console.log('Rewad for---> : ', formatEther(resp));
   });
-  it('1. Get Stake Pool By Id', async function () {
+  it('Get Stake Pool By Id', async function () {
     const resp = await stakeContract.getStakePoolById(
       'test1', //id
     );
     console.log(resp);
   });
 
-  it('3. Stake Token to the Pool', async function () {
+  it('Stake Token to the Pool', async function () {
     // await updateTimestampAsDays(10);
     // await updateTimestamp(1745599108);
     await stakeContract.stakeToken(
@@ -93,7 +93,14 @@ describe('StakeTest Contract', function () {
     //   'test1', //pool id
     // );
   });
-
+  it('Stakes in Stake Pools', async function () {
+    const resp = await stakeContract.listAllStakesInPool('test1');
+    console.log(resp);
+  });
+  it('Total Length Stakes in the pool', async function () {
+    const resp = await stakeContract.lengthStakesInPool('test1');
+    console.log(resp);
+  });
   it('Balance OF the user After Staking --> ', async () => {
     const balance = await token.balanceOf(user1.address);
     const stakeContratBalance = await token.balanceOf(stakeAddress);

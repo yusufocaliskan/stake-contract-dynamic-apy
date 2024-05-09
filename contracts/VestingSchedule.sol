@@ -390,6 +390,8 @@ contract VestingSchedule is ReentrancyGuard, Ownable, AccessControl {
         return accountCliffSecs;
     }
 
+
+
     function isEventExists( string memory eventId) public view returns(bool) {
         if(_events[eventId].tgeRate > 0){
             return true;
