@@ -205,22 +205,19 @@ contract GptVerseStake is ReentrancyGuardUpgradeable, OwnableUpgradeable, UUPSUp
                 totalReward: 0, 
                 userAddress: userAddress 
         });
+
         _stakes[_stakePoolId][userAddress][stakeId] = newStake;
 
         //Update the users info
         _users[_stakePoolId][userAddress].totalStakedAmount += _amount;
 
-
         //calculate the total reward for the current stake
         uint256 totalReward = totalRewardsOfStake(userAddress, _stakePoolId, stakeId);
 
-
         _stakesInPool[_stakePoolId].push(newStake);
-        // uint stakeDays = getStakingDurationInDays(block.timestamp, stakePoolEndDate);
 
         //update it
         _stakes[_stakePoolId][userAddress][stakeId].totalReward =totalReward; 
-        // _stakes[_stakePoolId][userAddress][stakeId].totalRewardWithAmount =totalReward+_amount; 
 
         _userPoolStakeIds[_stakePoolId][userAddress].push(stakeId);       _allStakeIds.push(stakeId);
 
@@ -246,7 +243,6 @@ contract GptVerseStake is ReentrancyGuardUpgradeable, OwnableUpgradeable, UUPSUp
         // APY of the pool
         uint256 apyRate = _stakePool[_stakePoolId].apy;
 
-        // uint256 daysElapsed = elapsedTime / 86400; // seconds in a day
         uint stakeDays = getStakingDurationInDays(stakeStartDate, stakePoolEndDate); 
 
         uint256 dailyRate = (apyRate * 1e18) / 36500; 
@@ -316,15 +312,11 @@ contract GptVerseStake is ReentrancyGuardUpgradeable, OwnableUpgradeable, UUPSUp
     //rewards for each stake
     function claimReward4Each(address userAddress, string memory _stakePoolId, uint256 _stakeId) public returns(uint256){
 
-
-
         require(block.timestamp > _stakePool[_stakePoolId].endDate, "Stake Pool has not ended yet.");
-
 
         uint256 rewardAmount = calculateRewardInSeconds(userAddress, _stakePoolId, _stakeId);
 
         _stakes[_stakePoolId][userAddress][_stakeId].stakeReward = rewardAmount; 
-
 
         _token.transfer(userAddress, rewardAmount);
 

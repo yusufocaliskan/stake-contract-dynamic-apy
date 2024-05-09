@@ -42,6 +42,12 @@ module.exports = {
   etherscan: {
     apiKey: bscscanApiKey,
   },
+  gasReporter: {
+    enabled: true,
+    currency: 'BNB',
+    coinmarketcap: '39a4f3ef-b65d-4a71-8cba-31e5217a8365',
+    gasPrice: 20,
+  },
   solidity: {
     version: '0.8.24',
     settings: {
