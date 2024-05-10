@@ -1,8 +1,8 @@
 const { ethers, upgrades } = require('hardhat');
 
 async function main() {
-  const existingProxyAddress = '0x3280F34AE438121018aEc130be19F2D1db353AB9';
-  const GptVerseStakeV2 = await ethers.getContractFactory('GptVerseStakeV2');
+  const existingProxyAddress = '0xc8c6414184D3cc65190068C4A12F793AB24cd3F8';
+  const GptVerseStakeV2 = await ethers.getContractFactory('GptVerseStake');
 
   const upgradedProxy = await upgrades.upgradeProxy(
     existingProxyAddress,

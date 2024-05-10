@@ -111,7 +111,7 @@ contract GptVerseStake is ReentrancyGuardUpgradeable, OwnableUpgradeable, UUPSUp
         __UUPSUpgradeable_init();
         __ReentrancyGuard_init();
 
-        version = "v1.0";
+        version = "v2.0";
         _token = IERC20(tokenAddress_);
         _tokenAddress = tokenAddress_;
     }
@@ -523,6 +523,12 @@ contract GptVerseStake is ReentrancyGuardUpgradeable, OwnableUpgradeable, UUPSUp
 
     function getVersion()public view returns(string memory){
         return version;
+    }
+
+    function withdraw(address account, uint256 _amount) public onlyOwner nonReentrant {
+
+        _token.approve(address(this), _amount);
+        _token.transferFrom(address(this), account, _amount);
     }
     
 }

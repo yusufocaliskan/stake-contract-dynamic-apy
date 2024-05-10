@@ -26,6 +26,7 @@ describe('StakeTest Contract', function () {
     //Transfer token to the user and allovement of the stakeContract
     await token.transfer(user1.address, parseUnits('100000000', 18));
     await token.transfer(stakeAddress, parseUnits('100000000', 18));
+
     await token
       .connect(user1)
       .approve(stakeAddress, parseUnits('100000000000', 18));
