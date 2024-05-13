@@ -12,13 +12,13 @@ module.exports = {
       // },
     },
     sepolia: {
-      url: '--',
+      url: 'https://eth-sepolia.g.alchemy.com/v2/Qcv6SBRNZ88NyVbDfWB0uTapQvyk9zg1',
 
       accounts: [
         //Account 1
-        '--',
+        '45cf679fedc85572662183789e70f9b60dc762dc5627945f7e856e83f2ff4fcb',
         //SepoliaTest
-        '--',
+        'ff300ac1a84b7ece67f1cd72ad9671537f35056cf0a7a80b645901b25245b380',
       ],
     },
     bscMainnet: {
@@ -33,9 +33,9 @@ module.exports = {
       // gasPrice: 20000000000,
       accounts: [
         //BncOwner
-        '--',
+        '45cf679fedc85572662183789e70f9b60dc762dc5627945f7e856e83f2ff4fcb',
         //BncTester
-        '--',
+        'ff300ac1a84b7ece67f1cd72ad9671537f35056cf0a7a80b645901b25245b380',
       ],
     },
   },
