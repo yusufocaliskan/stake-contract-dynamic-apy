@@ -11,7 +11,7 @@ import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol
 
 contract GptVerseStake is ReentrancyGuardUpgradeable, OwnableUpgradeable, UUPSUpgradeable{
 
-    string public version;
+    string public constant VERSION= "1.2";
 
     struct StakePools{
         string stakePoolId;
@@ -111,7 +111,6 @@ contract GptVerseStake is ReentrancyGuardUpgradeable, OwnableUpgradeable, UUPSUp
         __UUPSUpgradeable_init();
         __ReentrancyGuard_init();
 
-        version = "v2.0";
         _token = IERC20(tokenAddress_);
         _tokenAddress = tokenAddress_;
     }
@@ -521,8 +520,8 @@ contract GptVerseStake is ReentrancyGuardUpgradeable, OwnableUpgradeable, UUPSUp
         );
     }
 
-    function getVersion()public view returns(string memory){
-        return version;
+    function getVersion() public view returns(string memory){
+        return VERSION;
     }
 
     function withdraw(address account, uint256 _amount) public onlyOwner nonReentrant {
