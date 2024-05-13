@@ -520,7 +520,7 @@ contract GptVerseStake is ReentrancyGuardUpgradeable, OwnableUpgradeable, UUPSUp
         );
     }
 
-    function getVersion() public view returns(string memory){
+    function getVersion() public pure returns(string memory){
         return VERSION;
     }
 
