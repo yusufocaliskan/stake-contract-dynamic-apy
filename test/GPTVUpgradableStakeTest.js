@@ -1,7 +1,6 @@
 const { expect } = require('chai');
-const { parseUnits, formatEther, formatUnits } = require('ethers');
+const { parseUnits, formatEther } = require('ethers');
 const { ethers, network } = require('hardhat');
-const { boolean } = require('hardhat/internal/core/params/argumentTypes');
 
 describe('StakeTest Contract', function () {
   let token, stakeContract, stakeAddress;

@@ -1,10 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
 
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol"; 
@@ -213,12 +211,12 @@ contract GptVerseStake is ReentrancyGuardUpgradeable, OwnableUpgradeable, UUPSUp
         //calculate the total reward for the current stake
         uint256 totalReward = totalRewardsOfStake(userAddress, _stakePoolId, stakeId);
 
-        _stakesInPool[_stakePoolId].push(newStake);
 
         //update it
         _stakes[_stakePoolId][userAddress][stakeId].totalReward =totalReward; 
 
         _userPoolStakeIds[_stakePoolId][userAddress].push(stakeId);       _allStakeIds.push(stakeId);
+        _stakesInPool[_stakePoolId].push(newStake);
 
         //Throw an event
         emit Stake(userAddress, _amount);
@@ -393,7 +391,7 @@ contract GptVerseStake is ReentrancyGuardUpgradeable, OwnableUpgradeable, UUPSUp
         return _stakePool[_stakePoolId];
     }
 
-    function getAllUserStakesByStakePoolsId(string memory _stakePoolId, address _userAddress) public view returns (Stakes[] memory) {
+    function getAllUserStakesByStakePoolsId(string memory _stakePoolId, address _userAddress) public onlyOwner view returns (Stakes[] memory) {
         uint length = _allStakeIds.length;
         Stakes[] memory stakes = new Stakes[](length);
         for (uint i = 0; i < length; i++) {
@@ -456,7 +454,7 @@ contract GptVerseStake is ReentrancyGuardUpgradeable, OwnableUpgradeable, UUPSUp
     }
 
     //total number of the users that has staked
-    function getCountOfUsers() public view returns(uint256) {
+    function getCountOfUsers() public onlyOwner view returns(uint256) {
         return _totalUsers;
     }
 
@@ -474,15 +472,15 @@ contract GptVerseStake is ReentrancyGuardUpgradeable, OwnableUpgradeable, UUPSUp
         return account == owner();
     }
 
-    function getTokenAddress() public view returns (address) {
+    function getTokenAddress() public view onlyOwner returns  (address) {
         return address(_token);
     }
 
-    function listAllStakesInPool(string memory stakePoolId) public view returns (Stakes[] memory) {
+    function listAllStakesInPool(string memory stakePoolId) public onlyOwner view returns (Stakes[] memory) {
         return _stakesInPool[stakePoolId];
     }
 
-    function lengthStakesInPool(string memory stakePoolId) public view returns (uint) {
+    function lengthStakesInPool(string memory stakePoolId) public onlyOwner view returns (uint) {
         return _stakesInPool[stakePoolId].length;
     }
        
