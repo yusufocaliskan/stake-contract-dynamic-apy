@@ -377,11 +377,9 @@ contract GptVerseDistributedStake is ReentrancyGuardUpgradeable, OwnableUpgradea
         uint totalStakedAmountOfPool = _stakePool[_stakePoolId].totalStakedAmountOfPool;
         
         uint256 scaledMaxAPY = maxAPY * 1e18; 
-        uint256 apy = (scaledMaxAPY * _stakedAmount) / (totalStakedAmountOfPool-_stakedAmount);
+        uint256 apy = (scaledMaxAPY * _stakedAmount) / totalStakedAmountOfPool;
         uint result = apy / 1e18;
 
-        console.log("totalStakedAmountOfPool", totalStakedAmountOfPool);
-        console.log("result", result);
         console.log("APY RESULT", result);
 
         return result; 
@@ -427,6 +425,7 @@ contract GptVerseDistributedStake is ReentrancyGuardUpgradeable, OwnableUpgradea
         console.log("---rewardAmount--", rewardAmount);
 
         uint256 totalReward = rewardAmount+usersTotalStakeAmountInPool;
+
         require(totalReward > 0,"No token to claim" );
         _token.transfer(userAddress, totalReward);
 

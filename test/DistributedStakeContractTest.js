@@ -63,23 +63,6 @@ describe('Distributed Stake Token Contract', function () {
     );
   });
 
-  // it('calculateStakeRewardWithDefinedAmount===', async () => {
-  //   // await updateTimestampAsDays(365);
-  //   const resp = await stakeContract.calculateStakeRewardWithDefinedAmount(
-  //     'test1', //pool id
-
-  //     parseUnits('100', 18), //amount
-  //   );
-
-  //   console.log('Rewad for---> : ', formatEther(resp));
-  // });
-  // it('Get Stake Pool By Id', async function () {
-  //   const resp = await stakeContract.getStakePoolById(
-  //     'test1', //id
-  //   );
-  //   console.log(resp);
-  // });
-
   it('User1: Stake Token to the Pool', async function () {
     // await updateTimestampAsDays(10);
     // await updateTimestamp(1745599108);
@@ -87,16 +70,10 @@ describe('Distributed Stake Token Contract', function () {
     await token.connect(user1).approve(stakeAddress, parseUnits('1000000', 18));
 
     let amount;
-    amount = parseUnits('100', 18);
+    amount = parseUnits('200', 18);
     await stakeContract.stakeToken(
       user1.address, //user
       amount, //amount
-      'test1', //pool id
-    );
-
-    await stakeContract.stakeToken(
-      user1.address, //user
-      parseUnits('100', 18), //amount
       'test1', //pool id
     );
 
@@ -112,62 +89,15 @@ describe('Distributed Stake Token Contract', function () {
 
     await token.connect(user2).approve(stakeAddress, parseUnits('1000000', 18));
 
-    const amount = parseUnits('200', 18);
+    const amount = parseUnits('300', 18);
     await stakeContract.stakeToken(
       user2.address, //user
       amount, //amount
       'test1', //pool id
     );
-    // await stakeContract.stakeToken(
-    //   user1.address, //user
-    //   parseUnits('200', 18), //amount
-    //   'test1', //pool id
-    // );
 
     console.log('User2 Staked', amount);
   });
-  // it('Second User: Stake Token to the Pool', async function () {
-  //   // await updateTimestampAsDays(10);
-  //   // await updateTimestamp(1745599108);
-
-  //   await token.connect(user2).approve(stakeAddress, parseUnits('1000000', 18));
-
-  //   await stakeContract.stakeToken(
-  //     user2.address, //user
-  //     parseUnits('800', 18), //amount
-  //     'test1', //pool id
-  //   );
-  //   console.log('User Staked', parseUnits('800', 18));
-  // });
-  // it('User Balance Apter Staking', async function () {
-  //   const balance = await token.balanceOf(user2.address);
-  //   console.log('Balance After Staking: User2: ', balance);
-  // });
-  // it('Stakes in Stake Pools', async function () {
-  //   const resp = await stakeContract.listAllStakesInPool('test1');
-  //   console.log(resp);
-  // });
-  // it('Total Length Stakes in the pool', async function () {
-  //   const resp = await stakeContract.lengthStakesInPool('test1');
-  //   console.log(resp);
-  // });
-  // it('Balance OF the user After Staking --> ', async () => {
-  //   const balance = await token.balanceOf(user1.address);
-  //   const stakeContratBalance = await token.balanceOf(stakeAddress);
-  //   console.log(' Balance Of User 1 : ', balance);
-  //   console.log(
-  //     'New Balance BalanceOf Stake Contract 1 : ',
-  //     stakeContratBalance,
-  //   );
-  // });
-  // it('Stakes -->', async function () {
-  //   const resp = await stakeContract.getAllUserStakesByStakePoolsId(
-  //     'test1', //pool id
-
-  //     user1.address, //user
-  //   );
-  //   console.log('Stakes Of User', resp);
-  // });
 
   it('claimReward4Total User1-->', async function () {
     await updateTimestampAsDays(365);
@@ -195,104 +125,6 @@ describe('Distributed Stake Token Contract', function () {
   it('User2 Balance After Claim', async function () {
     const balance = await token.balanceOf(user2.address);
     console.log('User Balance After Claim: User2: ', balance);
-  });
-
-  // it('claimReward4Total User2-->', async function () {
-  //   await updateTimestampAsDays(365);
-
-  //   const tx = await stakeContract.claimReward4Total(
-  //     user2.address, //user
-  //     'test1', //pool id
-  //   );
-  //   await tx.wait(); // Wait for the transaction to be mined
-  // });
-  // it('Stakes USEr 2-->', async function () {
-  //   await updateTimestampAsDays(365);
-
-  //   const tx = await stakeContract.claimReward4Total(
-  //     user2.address, //user
-  //     'test1', //pool id
-  //   );
-  //   await tx.wait(); // Wait for the transaction to be mined
-  // });
-  // it(' getAllUserStakesByStakePoolsId -->', async function () {
-  //   const resp = await stakeContract.getAllUserStakesByStakePoolsId(
-  //     'test1', //pool id
-
-  //     user1.address, //user
-  //   );
-  //   console.log('Stakes Of User', resp);
-  // });
-
-  // it(' Is Pool Exists -->', async function () {
-  //   const resp = await stakeContract.checkIsPoolExists(
-  //     'test1', //pool id
-  //   );
-
-  //   console.log('Result: test1 pool', resp);
-  //   expect(resp).equal(true);
-  // });
-
-  // it(' getTotalRewardsInThePoolOfUser -->', async function () {
-  //   const resp = await stakeContract.getTotalRewardsInThePoolOfUser(
-  //     user1.address,
-  //     'test1', //pool id
-  //   );
-
-  //   console.log('Total Rewards', resp);
-  //   // expect(resp).equal(true);
-  // });
-  // it('withdraw token from contract', async () => {
-  //   await stakeContract.withdraw(user2.address, 1);
-  // });
-
-  // it('New Balance of the user', async () => {
-  //   const balanceOfUser2 = await token.balanceOf(user2.address);
-  //   const balance = await token.balanceOf(user1.address);
-  //   const stakeContratBalance = await token.balanceOf(stakeAddress);
-  //   console.log('NEw Balance Of User 1 : ', formatEther(balance));
-  //   console.log('NEw Balance Of User 2 : ', formatEther(balanceOfUser2));
-  //   console.log(
-  //     'New Balance BalanceOf Stake Contract 1 : ',
-  //     formatEther(stakeContratBalance),
-  //   );
-  // });
-  // it('getBalanceOfTheContract', async () => {
-  //   const balance = await stakeContract.getBalanceOfTheContract();
-  //   console.log('BalanceOf The Stake Contract : ', formatEther(balance));
-  // });
-
-  it('Check final user balance and rewards', async () => {
-    const finalBalance = await token.balanceOf(user1.address);
-    console.log('Final User Balance: ', finalBalance);
-
-    const stakes = await stakeContract.getAllUserStakesByStakePoolsId(
-      'test1',
-      user1.address,
-    );
-    console.log(
-      'Final Stakes Details: ',
-      stakes.map((stake) => ({
-        amount: formatEther(stake.stakeAmount),
-        reward: formatEther(stake.stakeReward),
-      })),
-    );
-  });
-  it('user 2: Check final user balance and rewards', async () => {
-    const finalBalance = await token.balanceOf(user1.address);
-    console.log('Final User2 Balance: ', formatEther(finalBalance));
-
-    const stakes = await stakeContract.getAllUserStakesByStakePoolsId(
-      'test1',
-      user2.address,
-    );
-    console.log(
-      'Final Stakes Details: ',
-      stakes.map((stake) => ({
-        amount: formatEther(stake.stakeAmount),
-        reward: formatEther(stake.stakeReward),
-      })),
-    );
   });
 });
 
