@@ -2,7 +2,7 @@ const { ethers, upgrades } = require('hardhat');
 
 async function main() {
   const ownerAddress = '0xeB80Df01fc3a988E88a1f70a74e5e0a0E77c1408';
-  const tokenAddress = '0x1F56eFffEe38EEeAE36cD38225b66c56E4D095a7';
+  const tokenAddress = '0x763Ba4A177B7a548864aAE8Fe76F247279DD7366';
 
   const GptVerseStake = await ethers.getContractFactory('GptVerseStake');
 
