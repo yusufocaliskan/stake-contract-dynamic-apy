@@ -70,7 +70,7 @@ describe('Distributed Stake Token Contract', function () {
     await token.connect(user1).approve(stakeAddress, parseUnits('1000000', 18));
 
     let amount;
-    amount = parseUnits('200', 18);
+    amount = parseUnits('300', 18);
     await stakeContract.stakeToken(
       user1.address, //user
       amount, //amount
@@ -89,14 +89,21 @@ describe('Distributed Stake Token Contract', function () {
 
     await token.connect(user2).approve(stakeAddress, parseUnits('1000000', 18));
 
-    const amount = parseUnits('300', 18);
     await stakeContract.stakeToken(
       user2.address, //user
-      amount, //amount
+      parseUnits('200', 18), //amount
       'test1', //pool id
     );
-
-    console.log('User2 Staked', amount);
+    await stakeContract.stakeToken(
+      user2.address, //user
+      parseUnits('100', 18), //amount
+      'test1', //pool id
+    );
+    await stakeContract.stakeToken(
+      user2.address, //user
+      parseUnits('100', 18), //amount
+      'test1', //pool id
+    );
   });
 
   it('claimReward4Total User1-->', async function () {
