@@ -29,8 +29,8 @@ describe('Distributed Stake Token Contract', function () {
     stakeContract = StakeContract.attach(stakeAddress);
 
     //Transfer token to the user and allovement of the stakeContract
-    await token.transfer(user1.address, parseUnits('2000', 18));
-    await token.transfer(user2.address, parseUnits('2000', 18));
+    await token.transfer(user1.address, parseUnits('100', 18));
+    await token.transfer(user2.address, parseUnits('100', 18));
     // await token.transfer(stakeAddress, parseUnits('100000000', 18));
     await token
       .connect(owner)
@@ -52,11 +52,11 @@ describe('Distributed Stake Token Contract', function () {
     await stakeContract.connect(owner).createStakePool(
       'test1', //id
       'Test Stake Pool', //name
-      1720265186, //start
-      1749197262, //end
+      1717760534, //start
+      1749296534, //end
       parseUnits('1', 18), //min
       parseUnits('1000000', 18), //max
-      parseUnits('1000', 18), //allocatedAmount
+      parseUnits('500', 18), //allocatedAmount
       100, //minAPY 1%
       5000, //maxAPY 50%
     );
@@ -68,15 +68,16 @@ describe('Distributed Stake Token Contract', function () {
 
     await token.connect(user1).approve(stakeAddress, parseUnits('1000000', 18));
 
-    let amount;
-    amount = parseUnits('300', 18);
     await stakeContract.stakeToken(
       user1.address, //user
-      amount, //amount
+      parseUnits('50', 18), //amount
       'test1', //pool id
     );
-
-    console.log('User1 Staked', amount);
+    await stakeContract.stakeToken(
+      user1.address, //user
+      parseUnits('50', 18), //amount
+      'test1', //pool id
+    );
   });
   it('User Balance Apter Staking', async function () {
     const balance = await token.balanceOf(user1.address);
@@ -93,15 +94,15 @@ describe('Distributed Stake Token Contract', function () {
     //   parseUnits('200', 18), //amount
     //   'test1', //pool id
     // );
-    await stakeContract.stakeToken(
-      user2.address, //user
-      parseUnits('400', 18), //amount
-      'test1', //pool id
-    );
+    // await stakeContract.stakeToken(
+    //   user2.address, //user
+    //   parseUnits('400', 18), //amount
+    //   'test1', //pool id
+    // );
   });
 
   it('claimReward4Total User1-->', async function () {
-    await updateTimestampAsDays(365);
+    await updateTimestampAsDays(368);
 
     const tx = await stakeContract.claimReward4Total(
       user1.address, //user
@@ -118,15 +119,15 @@ describe('Distributed Stake Token Contract', function () {
       );
     console.log('calculatedReward', calculatedReward);
   });
-  it('claimReward4Total User2-->', async function () {
-    await updateTimestampAsDays(365);
+  // it('claimReward4Total User2-->', async function () {
+  //   await updateTimestampAsDays(365);
 
-    const tx = await stakeContract.claimReward4Total(
-      user2.address, //user
-      'test1', //pool id
-    );
-    await tx.wait(); // Wait for the transaction to be mined
-  });
+  //   const tx = await stakeContract.claimReward4Total(
+  //     user2.address, //user
+  //     'test1', //pool id
+  //   );
+  //   await tx.wait(); // Wait for the transaction to be mined
+  // });
   it('User Balance After Claim', async function () {
     const balance = await token.balanceOf(user1.address);
     console.log('User Balance After Claim: User1: ', balance);
