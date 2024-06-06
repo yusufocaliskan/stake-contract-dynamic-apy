@@ -87,6 +87,7 @@ contract GptVerseDistributedStake is ReentrancyGuardUpgradeable, OwnableUpgradea
 
     event Stake(address indexed user, uint256 amount); // when staking
     event ClaimReward(address indexed user, uint256 amount); //when clamin the reward
+
     event StakePoolCreated(string indexed stakePoolId, string name, uint startDate, uint endDate,  uint256 minStakingAmount, uint256 maxStakingLimit, uint256 allocatedAmount);
 
     event StakePoolUpdated(string indexed stakePoolId, string name, uint startDate, uint endDate,  uint256 minStakingAmount, uint256 maxStakingLimit);
@@ -268,20 +269,7 @@ contract GptVerseDistributedStake is ReentrancyGuardUpgradeable, OwnableUpgradea
     }
 
 
-    function test_calculateApyRate( string memory _stakePoolId, uint256 _stakedAmount) internal view returns(uint) {
 
-
-        uint maxAPY = _stakePool[_stakePoolId].maxAPY;
-        uint minAPY = _stakePool[_stakePoolId].minAPY;
-        uint256 allocatedAmount = _stakedAmount;
-        uint256 scaledMaxAPY = maxAPY * 1e18;
-
-        uint totalStakedAmountOfPool = _stakePool[_stakePoolId].totalStakedAmountOfPool;
-        uint256 apy = (scaledMaxAPY * allocatedAmount) / totalStakedAmountOfPool;
-        console.log("totalStakedAmountOfPool", totalStakedAmountOfPool);
-        apy = apy / 1e18;
-        return apy > minAPY ? apy : minAPY;
-    }
     
 
     //Total reward of a spesific stake in a pool.
@@ -347,17 +335,19 @@ contract GptVerseDistributedStake is ReentrancyGuardUpgradeable, OwnableUpgradea
         return totalInterestReward;
     }
 
+    //Calculate Dynamic APY Based on user staked token in pool and total staked amount of pool
     function calculateApyRate(string memory _stakePoolId, uint256 _stakedAmount) internal view returns(uint) {
         uint maxAPY = _stakePool[_stakePoolId].maxAPY;
+        uint minAPY = _stakePool[_stakePoolId].minAPY;
         uint totalStakedAmountOfPool = _stakePool[_stakePoolId].totalStakedAmountOfPool;
         
         uint256 scaledMaxAPY = maxAPY * 1e18; 
         uint256 apy = (scaledMaxAPY * _stakedAmount) / (totalStakedAmountOfPool-_stakedAmount);
+
         uint result = apy / 1e18;
 
-        console.log("APY RESULT", result);
+        return result > minAPY ? result : minAPY;
 
-        return result; 
     }
 
 
@@ -391,22 +381,7 @@ contract GptVerseDistributedStake is ReentrancyGuardUpgradeable, OwnableUpgradea
         return resultAmount;
     }
 
-    //rewards for each stake
-    // function claimReward4Each(address userAddress, string memory _stakePoolId, uint256 _stakeId) public returns(uint256){
-
-    //     require(block.timestamp > _stakePool[_stakePoolId].endDate, "Stake Pool has not ended yet.");
-
-    //     uint256 rewardAmount = calculateRewardInSeconds(userAddress, _stakePoolId, _stakeId);
-
-    //     _stakes[_stakePoolId][userAddress][_stakeId].stakeReward = rewardAmount; 
-
-    //     _token.transfer(userAddress, rewardAmount);
-
-    //     _stakes[_stakePoolId][userAddress][_stakeId].lastStakeRewardTime = block.timestamp; 
-
-    //     emit ClaimReward(userAddress, rewardAmount);
-    //     return rewardAmount;
-    // }
+    
     // Function to calculate per-second interest
     function calculatePerSecondInterest(uint256 stakeAmount, uint256 apy) internal pure returns (uint256) {
         uint256 annualInterest = stakeAmount * apy / 10000; 
@@ -416,25 +391,6 @@ contract GptVerseDistributedStake is ReentrancyGuardUpgradeable, OwnableUpgradea
     function getStakingDurationInSeconds(uint256 _startTimestamp, uint256 _endTimestamp) public pure returns (uint256) {
         return _endTimestamp - _startTimestamp;
     }
-
-
-
-    // function getTotalRewardsInThePoolOfUser(address userAddress, string memory _stakePoolId) public view returns(uint256){
-
-    //     uint256[] memory relevantStakeIds = _userPoolStakeIds[_stakePoolId][userAddress];
-
-    //     uint countStakeOfPool = relevantStakeIds.length;
-    //     uint256 rewardAmount = 0;
-
-    //     for(uint256 i = 0; i < countStakeOfPool; i++){
-
-    //         uint256 stakeId = relevantStakeIds[i];
-    //         uint256 rewardOfStake = calculateRewardInSeconds(userAddress, _stakePoolId, stakeId);
-
-    //         rewardAmount += rewardOfStake;
-    //     }
-    //     return rewardAmount;
-    // }
 
 
     function getAllStakePools() public view returns (StakePools[] memory) {

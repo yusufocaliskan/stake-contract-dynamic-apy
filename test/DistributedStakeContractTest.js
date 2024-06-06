@@ -96,12 +96,7 @@ describe('Distributed Stake Token Contract', function () {
     );
     await stakeContract.stakeToken(
       user2.address, //user
-      parseUnits('100', 18), //amount
-      'test1', //pool id
-    );
-    await stakeContract.stakeToken(
-      user2.address, //user
-      parseUnits('100', 18), //amount
+      parseUnits('400', 18), //amount
       'test1', //pool id
     );
   });
