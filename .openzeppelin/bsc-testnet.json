@@ -10,6 +10,11 @@
       "address": "0x722EDcBC0C8E1E59932da9A305133eB47e28Cf9C",
       "txHash": "0x29e008d47e4601b50b0503bd0199188976a5fba05b1f66919acd04f59ca31ad5",
       "kind": "uups"
+    },
+    {
+      "address": "0xf7a2F8168FF6D3B71738C772B5853153E335A2fB",
+      "txHash": "0x1d65cce639fcc9255fecfbc8ea4068bad0b83ca4761148fb8a7283909e3a4a02",
+      "kind": "uups"
     }
   ],
   "impls": {
@@ -373,6 +378,431 @@
           },
           "t_struct(User)1669_storage": {
             "label": "struct GptVerseStake.User",
+            "members": [
+              {
+                "label": "account",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "totalStakedAmount",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "totalClaimedRewards",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "2"
+              }
+            ],
+            "numberOfBytes": "96"
+          }
+        },
+        "namespaces": {
+          "erc7201:openzeppelin.storage.Ownable": [
+            {
+              "contract": "OwnableUpgradeable",
+              "label": "_owner",
+              "type": "t_address",
+              "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:24",
+              "offset": 0,
+              "slot": "0"
+            }
+          ],
+          "erc7201:openzeppelin.storage.ReentrancyGuard": [
+            {
+              "contract": "ReentrancyGuardUpgradeable",
+              "label": "_status",
+              "type": "t_uint256",
+              "src": "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol:40",
+              "offset": 0,
+              "slot": "0"
+            }
+          ],
+          "erc7201:openzeppelin.storage.Initializable": [
+            {
+              "contract": "Initializable",
+              "label": "_initialized",
+              "type": "t_uint64",
+              "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:69",
+              "offset": 0,
+              "slot": "0"
+            },
+            {
+              "contract": "Initializable",
+              "label": "_initializing",
+              "type": "t_bool",
+              "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:73",
+              "offset": 8,
+              "slot": "0"
+            }
+          ]
+        }
+      }
+    },
+    "231d083fabd12a0891c8faa8148c13d67979dacb921dd0331c65ff24e59c9e82": {
+      "address": "0x2a4B6dA7740a76A09239aBd41FEa563452d0B845",
+      "txHash": "0xf91dec8d3da4ddcbfac40d7a227dd841fd043d677a5591d21c186f430f5f8352",
+      "layout": {
+        "solcVersion": "0.8.24",
+        "storage": [
+          {
+            "label": "_totalPools",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint256",
+            "contract": "GptVerseDistributedStake",
+            "src": "contracts/GptVerseDistributedStake.sol:31"
+          },
+          {
+            "label": "_allStakePools",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_array(t_string_storage)dyn_storage",
+            "contract": "GptVerseDistributedStake",
+            "src": "contracts/GptVerseDistributedStake.sol:34"
+          },
+          {
+            "label": "_allStakePoolIds",
+            "offset": 0,
+            "slot": "2",
+            "type": "t_array(t_string_storage)dyn_storage",
+            "contract": "GptVerseDistributedStake",
+            "src": "contracts/GptVerseDistributedStake.sol:35"
+          },
+          {
+            "label": "_stakePool",
+            "offset": 0,
+            "slot": "3",
+            "type": "t_mapping(t_string_memory_ptr,t_struct(StakePools)1610_storage)",
+            "contract": "GptVerseDistributedStake",
+            "src": "contracts/GptVerseDistributedStake.sol:39"
+          },
+          {
+            "label": "idCounter",
+            "offset": 0,
+            "slot": "4",
+            "type": "t_uint256",
+            "contract": "GptVerseDistributedStake",
+            "src": "contracts/GptVerseDistributedStake.sol:51"
+          },
+          {
+            "label": "_stakes",
+            "offset": 0,
+            "slot": "5",
+            "type": "t_mapping(t_string_memory_ptr,t_mapping(t_address,t_mapping(t_uint256,t_struct(Stakes)1636_storage)))",
+            "contract": "GptVerseDistributedStake",
+            "src": "contracts/GptVerseDistributedStake.sol:53"
+          },
+          {
+            "label": "_allStakeIds",
+            "offset": 0,
+            "slot": "6",
+            "type": "t_array(t_uint256)dyn_storage",
+            "contract": "GptVerseDistributedStake",
+            "src": "contracts/GptVerseDistributedStake.sol:55"
+          },
+          {
+            "label": "_userPoolStakeIds",
+            "offset": 0,
+            "slot": "7",
+            "type": "t_mapping(t_string_memory_ptr,t_mapping(t_address,t_array(t_uint256)dyn_storage))",
+            "contract": "GptVerseDistributedStake",
+            "src": "contracts/GptVerseDistributedStake.sol:57"
+          },
+          {
+            "label": "_stakesInPool",
+            "offset": 0,
+            "slot": "8",
+            "type": "t_mapping(t_string_memory_ptr,t_array(t_struct(Stakes)1636_storage)dyn_storage)",
+            "contract": "GptVerseDistributedStake",
+            "src": "contracts/GptVerseDistributedStake.sol:59"
+          },
+          {
+            "label": "_totalUsers",
+            "offset": 0,
+            "slot": "9",
+            "type": "t_uint256",
+            "contract": "GptVerseDistributedStake",
+            "src": "contracts/GptVerseDistributedStake.sol:69"
+          },
+          {
+            "label": "_allUserIds",
+            "offset": 0,
+            "slot": "10",
+            "type": "t_array(t_string_storage)dyn_storage",
+            "contract": "GptVerseDistributedStake",
+            "src": "contracts/GptVerseDistributedStake.sol:70"
+          },
+          {
+            "label": "_users",
+            "offset": 0,
+            "slot": "11",
+            "type": "t_mapping(t_string_memory_ptr,t_mapping(t_address,t_struct(User)1670_storage))",
+            "contract": "GptVerseDistributedStake",
+            "src": "contracts/GptVerseDistributedStake.sol:74"
+          },
+          {
+            "label": "_token",
+            "offset": 0,
+            "slot": "12",
+            "type": "t_contract(IERC20)1206",
+            "contract": "GptVerseDistributedStake",
+            "src": "contracts/GptVerseDistributedStake.sol:76"
+          },
+          {
+            "label": "_tokenAddress",
+            "offset": 0,
+            "slot": "13",
+            "type": "t_address",
+            "contract": "GptVerseDistributedStake",
+            "src": "contracts/GptVerseDistributedStake.sol:79"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_struct(InitializableStorage)65_storage": {
+            "label": "struct Initializable.InitializableStorage",
+            "members": [
+              {
+                "label": "_initialized",
+                "type": "t_uint64",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "_initializing",
+                "type": "t_bool",
+                "offset": 8,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_struct(OwnableStorage)14_storage": {
+            "label": "struct OwnableUpgradeable.OwnableStorage",
+            "members": [
+              {
+                "label": "_owner",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_struct(ReentrancyGuardStorage)195_storage": {
+            "label": "struct ReentrancyGuardUpgradeable.ReentrancyGuardStorage",
+            "members": [
+              {
+                "label": "_status",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint64": {
+            "label": "uint64",
+            "numberOfBytes": "8"
+          },
+          "t_array(t_string_storage)dyn_storage": {
+            "label": "string[]",
+            "numberOfBytes": "32"
+          },
+          "t_array(t_struct(Stakes)1636_storage)dyn_storage": {
+            "label": "struct GptVerseDistributedStake.Stakes[]",
+            "numberOfBytes": "32"
+          },
+          "t_array(t_uint256)dyn_storage": {
+            "label": "uint256[]",
+            "numberOfBytes": "32"
+          },
+          "t_contract(IERC20)1206": {
+            "label": "contract IERC20",
+            "numberOfBytes": "20"
+          },
+          "t_mapping(t_address,t_array(t_uint256)dyn_storage)": {
+            "label": "mapping(address => uint256[])",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_mapping(t_uint256,t_struct(Stakes)1636_storage))": {
+            "label": "mapping(address => mapping(uint256 => struct GptVerseDistributedStake.Stakes))",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_struct(User)1670_storage)": {
+            "label": "mapping(address => struct GptVerseDistributedStake.User)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_string_memory_ptr,t_array(t_struct(Stakes)1636_storage)dyn_storage)": {
+            "label": "mapping(string => struct GptVerseDistributedStake.Stakes[])",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_string_memory_ptr,t_mapping(t_address,t_array(t_uint256)dyn_storage))": {
+            "label": "mapping(string => mapping(address => uint256[]))",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_string_memory_ptr,t_mapping(t_address,t_mapping(t_uint256,t_struct(Stakes)1636_storage)))": {
+            "label": "mapping(string => mapping(address => mapping(uint256 => struct GptVerseDistributedStake.Stakes)))",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_string_memory_ptr,t_mapping(t_address,t_struct(User)1670_storage))": {
+            "label": "mapping(string => mapping(address => struct GptVerseDistributedStake.User))",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_string_memory_ptr,t_struct(StakePools)1610_storage)": {
+            "label": "mapping(string => struct GptVerseDistributedStake.StakePools)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_struct(Stakes)1636_storage)": {
+            "label": "mapping(uint256 => struct GptVerseDistributedStake.Stakes)",
+            "numberOfBytes": "32"
+          },
+          "t_string_memory_ptr": {
+            "label": "string",
+            "numberOfBytes": "32"
+          },
+          "t_string_storage": {
+            "label": "string",
+            "numberOfBytes": "32"
+          },
+          "t_struct(StakePools)1610_storage": {
+            "label": "struct GptVerseDistributedStake.StakePools",
+            "members": [
+              {
+                "label": "stakePoolId",
+                "type": "t_string_storage",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "name",
+                "type": "t_string_storage",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "startDate",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "2"
+              },
+              {
+                "label": "endDate",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "3"
+              },
+              {
+                "label": "totalStakedAmountOfPool",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "4"
+              },
+              {
+                "label": "isPaused",
+                "type": "t_bool",
+                "offset": 0,
+                "slot": "5"
+              },
+              {
+                "label": "minStakingAmount",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "6"
+              },
+              {
+                "label": "maxStakingLimit",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "7"
+              },
+              {
+                "label": "isDeleted",
+                "type": "t_bool",
+                "offset": 0,
+                "slot": "8"
+              },
+              {
+                "label": "allocatedAmount",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "9"
+              },
+              {
+                "label": "minAPY",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "10"
+              },
+              {
+                "label": "maxAPY",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "11"
+              }
+            ],
+            "numberOfBytes": "384"
+          },
+          "t_struct(Stakes)1636_storage": {
+            "label": "struct GptVerseDistributedStake.Stakes",
+            "members": [
+              {
+                "label": "stakePoolId",
+                "type": "t_string_storage",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "stakeId",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "startDate",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "2"
+              },
+              {
+                "label": "lastStakeRewardTime",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "3"
+              },
+              {
+                "label": "stakeAmount",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "4"
+              },
+              {
+                "label": "userAddress",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "5"
+              }
+            ],
+            "numberOfBytes": "192"
+          },
+          "t_struct(User)1670_storage": {
+            "label": "struct GptVerseDistributedStake.User",
             "members": [
               {
                 "label": "account",
