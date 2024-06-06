@@ -13,7 +13,6 @@ contract GptVerseDistributedStake is ReentrancyGuardUpgradeable, OwnableUpgradea
 
     string public constant VERSION= "1.0";
 
-
     struct StakePools{
         string stakePoolId;
         string name;
@@ -46,10 +45,6 @@ contract GptVerseDistributedStake is ReentrancyGuardUpgradeable, OwnableUpgradea
         uint startDate;
         uint256 lastStakeRewardTime;
         uint stakeAmount;
-        uint stakeReward;
-
-        //the reward that would be given to the user at the end of the stake time (the pool time)
-        uint256 totalReward; 
         address userAddress; 
     }
 
@@ -96,16 +91,16 @@ contract GptVerseDistributedStake is ReentrancyGuardUpgradeable, OwnableUpgradea
 
     //Chekcs if the address has enought balance
     modifier whenTreasuryHasBalance(uint256 amount){
-
         require(_token.balanceOf(address(this)) >= amount, "Insufficient funds in the treasury.");
         _;
     }
 
-    function setTokenAddress(address tokenAddress_) public  onlyOwner {
+    function setTokenAddress(address tokenAddress_) public  onlyOwner{
         _tokenAddress = tokenAddress_;
     }
     
     function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
+
 
     function initialize(address initialOwner, address tokenAddress_) public initializer {
         __Ownable_init(initialOwner);
@@ -136,7 +131,6 @@ contract GptVerseDistributedStake is ReentrancyGuardUpgradeable, OwnableUpgradea
         require(minAPY > 0 && minAPY < maxAPY, "Min APY rate should be less then Max APY and greater than 0");
 
         require(startDate < endDate, "Start date connot be greater than the end date");
-
 
         require(!isPoolExists, "The pool has already been created.");
 
@@ -176,6 +170,8 @@ contract GptVerseDistributedStake is ReentrancyGuardUpgradeable, OwnableUpgradea
         require(_amount > 0, "Stake amount must be non-zero.");
         require(!_stakePool[_stakePoolId].isPaused, "The stake is paused.");
 
+
+        //accepts staking before start
         require(!isStakePoolStarted(_stakePoolId), "The pool no longer accepts staking. It has already started.");
 
         require(!isStakePoolEnded(_stakePoolId), "Staking is ended.");
@@ -209,8 +205,6 @@ contract GptVerseDistributedStake is ReentrancyGuardUpgradeable, OwnableUpgradea
                 lastStakeRewardTime: block.timestamp,
                 startDate: block.timestamp,
                 stakeAmount: _amount,
-                stakeReward: 0,
-                totalReward: 0, 
                 userAddress: userAddress 
         });
 
@@ -218,14 +212,6 @@ contract GptVerseDistributedStake is ReentrancyGuardUpgradeable, OwnableUpgradea
 
         //Update the users info
         _users[_stakePoolId][userAddress].totalStakedAmount += _amount;
-
-        //calculate the total reward for the current stake
-        uint256 totalReward = totalRewardsOfStake(userAddress, _stakePoolId, stakeId);
-
-
-        //update it
-        _stakes[_stakePoolId][userAddress][stakeId].totalReward =totalReward; 
-
 
         // update totalStaked Amount
         _stakePool[_stakePoolId].totalStakedAmountOfPool += _amount;
@@ -253,7 +239,7 @@ contract GptVerseDistributedStake is ReentrancyGuardUpgradeable, OwnableUpgradea
     function isStakePoolStarted(string memory _stakePoolId) internal view returns (bool){
 
         uint stakePoolStartDate = _stakePool[_stakePoolId].startDate;
-        if(stakePoolStartDate > block.timestamp){
+        if(block.timestamp > stakePoolStartDate ){
             return true;
         }
 
@@ -266,55 +252,6 @@ contract GptVerseDistributedStake is ReentrancyGuardUpgradeable, OwnableUpgradea
             return true;
         }
         return false;
-    }
-
-
-
-    
-
-    //Total reward of a spesific stake in a pool.
-    function calculateTotalRewardsOfStake(address userAddress, string memory _stakePoolId, uint256 _stakeId) public view returns(uint256) {
-
-        // Staked amount
-        uint256 stakeAmount = _stakes[_stakePoolId][userAddress][_stakeId].stakeAmount;
-
-        uint stakeStartDate = _stakes[_stakePoolId][userAddress][_stakeId].startDate;
-        uint stakePoolEndDate = _stakePool[_stakePoolId].endDate;
-
-        // APY of the pool
-        uint256 apyRate = calculateApyRate(_stakePoolId, stakeAmount);
-        
-
-        uint stakeDays = getStakingDurationInDays(stakeStartDate, stakePoolEndDate); 
-
-        uint256 dailyRate = (apyRate * 1e18) / 36500; 
-
-        uint256 interestPerDay = stakeAmount * dailyRate / 1e20; 
-        uint256 totalRewardOfTheStake = interestPerDay * stakeDays;
-
-        return totalRewardOfTheStake;
-    }
-
-
-
-    function totalRewardsOfStake(address userAddress, string memory _stakePoolId, uint256 _stakeId) public view returns(uint256) {
-
-        // Fetch stake details
-        uint256 stakeAmount = _stakes[_stakePoolId][userAddress][_stakeId].stakeAmount;
-        uint256 stakeStartDate = _stakes[_stakePoolId][userAddress][_stakeId].startDate;
-
-        uint stakePoolEndDate = _stakePool[_stakePoolId].endDate;
-        // Calculate the duration in seconds
-        uint256 durationInSeconds = getStakingDurationInSeconds(stakeStartDate, stakePoolEndDate);
-
-        // Calculate interest per second based on APY and stake amount
-        uint256 apyRate = calculateApyRate(_stakePoolId, stakeAmount);
-        uint256 perSecondInterest = calculatePerSecondInterest(stakeAmount, apyRate);
-
-        // Sum up total rewards earned during the duration in seconds
-        uint256 totalInterestReward = perSecondInterest * durationInSeconds;
-
-        return totalInterestReward;  
     }
 
 
@@ -352,7 +289,8 @@ contract GptVerseDistributedStake is ReentrancyGuardUpgradeable, OwnableUpgradea
 
 
 
-    //total rewards of te usr's  stakes 
+    //claim total rewards of te usr's  stakes 
+    //with staked amount
     function claimReward4Total(address userAddress, string memory _stakePoolId) public returns(uint256){
 
 
@@ -360,15 +298,7 @@ contract GptVerseDistributedStake is ReentrancyGuardUpgradeable, OwnableUpgradea
 
         uint256 usersTotalStakeAmountInPool = _users[_stakePoolId][userAddress].totalStakedAmount;
 
-        uint256 totalReward = calculateReward( _stakePoolId, usersTotalStakeAmountInPool);
-
-        console.log("---------------------------");
-
-        uint totalStakedAmountOfPool = _stakePool[_stakePoolId].totalStakedAmountOfPool;
-
-        console.log("totalStakedAmountOfPool", totalStakedAmountOfPool);
-        console.log("usersTotalStakeAmountInPool", usersTotalStakeAmountInPool);
-
+        uint256 totalReward= getCurrentRewards(userAddress, _stakePoolId);
         uint256 resultAmount = totalReward+usersTotalStakeAmountInPool; 
 
         console.log("---rewardAmount--", totalReward);
@@ -379,6 +309,15 @@ contract GptVerseDistributedStake is ReentrancyGuardUpgradeable, OwnableUpgradea
 
         emit ClaimReward(userAddress, resultAmount);
         return resultAmount;
+    }
+
+    //total rewards of te usr's  stakes 
+    function getCurrentRewards(address userAddress, string memory _stakePoolId) public view returns(uint256){
+
+        uint256 usersTotalStakeAmountInPool = _users[_stakePoolId][userAddress].totalStakedAmount;
+
+        uint256 totalReward = calculateReward( _stakePoolId, usersTotalStakeAmountInPool);
+        return totalReward;
     }
 
     
@@ -439,36 +378,11 @@ contract GptVerseDistributedStake is ReentrancyGuardUpgradeable, OwnableUpgradea
     
     function calculateStakeRewardWithDefinedAmount(string memory _stakePoolId, uint256 stakeAmount) public view returns(uint256) {
 
-        uint256 stakeStartDate = block.timestamp;
-        uint256 stakeEndDate = _stakePool[_stakePoolId].endDate;
-
-        if (stakeEndDate <= stakeStartDate) {
-            return 0; 
-        }
-
-        uint256 totalStakeSeconds = getStakingDurationInSeconds(stakeStartDate, stakeEndDate);
-
-        uint256 apyRate = calculateApyRate(_stakePoolId, stakeAmount);
-        uint256 perSecondInterest = calculatePerSecondInterest(stakeAmount, apyRate);
-
-        uint256 totalInterestReward = perSecondInterest * totalStakeSeconds;
-
-        return totalInterestReward;
+        
+        uint256 totalReward = calculateReward( _stakePoolId, stakeAmount);
+        return totalReward;
     }
 
-    function calculateCustomizeableStakeReward(uint256 _stakeAmount, uint256 _startDate, uint256 _endDate, uint256 _apyRate) public pure returns(uint256) {
-
-        uint256 stakeStartDate = _startDate;
-        uint256 stakeEndDate = _endDate;
-
-        uint256 totalStakeSeconds = getStakingDurationInSeconds(stakeStartDate, stakeEndDate);
-
-        uint256 perSecondInterest = calculatePerSecondInterest(_stakeAmount, _apyRate);
-
-        uint256 totalInterestReward = perSecondInterest * totalStakeSeconds;
-
-        return totalInterestReward;
-    }
 
     //total number of the users that has staked
     function getCountOfUsers() public onlyOwner view returns(uint256) {

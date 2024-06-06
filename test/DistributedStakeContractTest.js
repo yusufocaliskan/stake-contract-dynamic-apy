@@ -1,5 +1,4 @@
-const { expect } = require('chai');
-const { parseUnits, formatEther } = require('ethers');
+const { parseUnits } = require('ethers');
 const { ethers, network } = require('hardhat');
 
 describe('Distributed Stake Token Contract', function () {
@@ -53,7 +52,7 @@ describe('Distributed Stake Token Contract', function () {
     await stakeContract.connect(owner).createStakePool(
       'test1', //id
       'Test Stake Pool', //name
-      1717661262, //start
+      1720265186, //start
       1749197262, //end
       parseUnits('1', 18), //min
       parseUnits('1000000', 18), //max
@@ -89,11 +88,11 @@ describe('Distributed Stake Token Contract', function () {
 
     await token.connect(user2).approve(stakeAddress, parseUnits('1000000', 18));
 
-    await stakeContract.stakeToken(
-      user2.address, //user
-      parseUnits('200', 18), //amount
-      'test1', //pool id
-    );
+    // await stakeContract.stakeToken(
+    //   user2.address, //user
+    //   parseUnits('200', 18), //amount
+    //   'test1', //pool id
+    // );
     await stakeContract.stakeToken(
       user2.address, //user
       parseUnits('400', 18), //amount
@@ -111,6 +110,14 @@ describe('Distributed Stake Token Contract', function () {
     await tx.wait(); // Wait for the transaction to be mined
   });
 
+  it('calculateStakeRewardWithDefinedAmount-->', async function () {
+    const calculatedReward =
+      await stakeContract.calculateStakeRewardWithDefinedAmount(
+        'test1', //pool id
+        parseUnits('400', 18),
+      );
+    console.log('calculatedReward', calculatedReward);
+  });
   it('claimReward4Total User2-->', async function () {
     await updateTimestampAsDays(365);
 
