@@ -279,9 +279,16 @@ contract GptVerseDistributedStake is ReentrancyGuardUpgradeable, OwnableUpgradea
         uint totalStakedAmountOfPool = _stakePool[_stakePoolId].totalStakedAmountOfPool;
         
         uint256 scaledMaxAPY = maxAPY * 1e18; 
+        console.log("scaledMaxAPY", scaledMaxAPY);
+        console.log("totalStakedAmountOfPool", totalStakedAmountOfPool);
+
+        console.log("(scaledMaxAPY * _stakedAmount)", (scaledMaxAPY * _stakedAmount));
+        console.log("(totalStakedAmountOfPool-_stakedAmount)", (totalStakedAmountOfPool-_stakedAmount));
         uint256 apy = (scaledMaxAPY * _stakedAmount) / (totalStakedAmountOfPool-_stakedAmount);
 
         uint result = apy / 1e18;
+        
+        console.log("Result APY", result);
 
         return result > minAPY ? result : minAPY;
 
