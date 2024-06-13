@@ -140,7 +140,7 @@ contract GptVerseDistributedStake is ReentrancyGuardUpgradeable, OwnableUpgradea
             name: name,
             startDate: startDate,
             endDate: endDate,
-            totalStakedAmountOfPool: allocatedAmount,
+            totalStakedAmountOfPool: 0,
             isPaused: false,
             minStakingAmount: minStakingAmount,
             maxStakingLimit: maxStakingLimit,
@@ -153,7 +153,6 @@ contract GptVerseDistributedStake is ReentrancyGuardUpgradeable, OwnableUpgradea
 
         // set it
         _stakePool[stakePoolId] = newPool;
-        
         _allStakePools.push(stakePoolId);
         _allStakePoolIds.push(stakePoolId);
 
@@ -165,6 +164,7 @@ contract GptVerseDistributedStake is ReentrancyGuardUpgradeable, OwnableUpgradea
 
     function checkStakingConditions(uint256 _amount, string memory _stakePoolId) internal view {
 
+        
 
         require(_stakePool[_stakePoolId].isDeleted == false, "The pool has been deleted.");
         require(_amount > 0, "Stake amount must be non-zero.");
@@ -178,13 +178,18 @@ contract GptVerseDistributedStake is ReentrancyGuardUpgradeable, OwnableUpgradea
 
         require(_amount <= _stakePool[_stakePoolId].maxStakingLimit, "Max staking token limit reached");
 
+        require(_amount <= _stakePool[_stakePoolId].allocatedAmount, "Amount must be lower then allocated amount.");
+
         require(_amount >= _stakePool[_stakePoolId].minStakingAmount, "Stake Amount must be greater than min. amount allowed.");
     }
+
+
 
 
     //gets the amount that the users wants 
     function stakeToken(address userAddress, uint256 _amount, string memory _stakePoolId) public nonReentrant {
         
+
         //Some validations
         checkStakingConditions(_amount, _stakePoolId);
 
@@ -272,6 +277,13 @@ contract GptVerseDistributedStake is ReentrancyGuardUpgradeable, OwnableUpgradea
         return totalInterestReward;
     }
 
+    function getCurrentPoolAPYOfUser(address userAddress, string memory _stakePoolId )public view returns(uint256){
+
+        uint256 usersTotalStakeAmountInPool = _users[_stakePoolId][userAddress].totalStakedAmount;
+        uint256 apyRate = calculateApyRate(_stakePoolId, usersTotalStakeAmountInPool);
+        return apyRate;
+    }
+
     //Calculate Dynamic APY Based on user staked token in pool and total staked amount of pool
     function calculateApyRate(string memory _stakePoolId, uint256 _stakedAmount) internal view returns(uint) {
         uint maxAPY = _stakePool[_stakePoolId].maxAPY;
@@ -279,20 +291,16 @@ contract GptVerseDistributedStake is ReentrancyGuardUpgradeable, OwnableUpgradea
         uint totalStakedAmountOfPool = _stakePool[_stakePoolId].totalStakedAmountOfPool;
         
         uint256 scaledMaxAPY = maxAPY * 1e18; 
-        console.log("scaledMaxAPY", scaledMaxAPY);
-        console.log("totalStakedAmountOfPool", totalStakedAmountOfPool);
 
-        console.log("(scaledMaxAPY * _stakedAmount)", (scaledMaxAPY * _stakedAmount));
-        console.log("(totalStakedAmountOfPool-_stakedAmount)", (totalStakedAmountOfPool-_stakedAmount));
-        uint256 apy = (scaledMaxAPY * _stakedAmount) / (totalStakedAmountOfPool-_stakedAmount);
+        uint256 apy = (scaledMaxAPY * _stakedAmount) / totalStakedAmountOfPool;
 
         uint result = apy / 1e18;
         
-        console.log("Result APY", result);
-
-        return result > minAPY ? result : minAPY;
+        result= result > minAPY ? result : minAPY;
+        return result;
 
     }
+
 
 
 
@@ -301,7 +309,10 @@ contract GptVerseDistributedStake is ReentrancyGuardUpgradeable, OwnableUpgradea
     function claimReward4Total(address userAddress, string memory _stakePoolId) public returns(uint256){
 
 
-        require(block.timestamp > _stakePool[_stakePoolId].endDate, "Stake Pool has not ended yet.");
+        require(isStakePoolEnded(_stakePoolId), "Staking is ended.");
+
+
+        // require(block.timestamp > _stakePool[_stakePoolId].endDate, "Stake Pool has not ended yet.");
 
         uint256 usersTotalStakeAmountInPool = _users[_stakePoolId][userAddress].totalStakedAmount;
 
@@ -446,7 +457,7 @@ contract GptVerseDistributedStake is ReentrancyGuardUpgradeable, OwnableUpgradea
         _stakePool[stakePoolId].endDate = newEndDate;
         _stakePool[stakePoolId].minAPY = minAPY;
 
-        _stakePool[stakePoolId].maxAPY = minAPY;
+        _stakePool[stakePoolId].maxAPY = maxAPY;
         _stakePool[stakePoolId].minStakingAmount = newMinStakingAmount;
         _stakePool[stakePoolId].maxStakingLimit = newMaxStakingLimit;
 
