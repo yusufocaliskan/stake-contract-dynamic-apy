@@ -162,11 +162,13 @@ contract GptVerseDistributedStake is ReentrancyGuardUpgradeable, OwnableUpgradea
 
     }
 
-    function checkStakingConditions(uint256 _amount, string memory _stakePoolId) internal view {
+    function checkStakingConditions(uint256 _amount, string memory _stakePoolId, address userAddress) internal view {
 
         
+        uint256 usersTotalStakeAmountInPool = _users[_stakePoolId][userAddress].totalStakedAmount;
 
         require(_stakePool[_stakePoolId].isDeleted == false, "The pool has been deleted.");
+
         require(_amount > 0, "Stake amount must be non-zero.");
         require(!_stakePool[_stakePoolId].isPaused, "The stake is paused.");
 
@@ -175,10 +177,18 @@ contract GptVerseDistributedStake is ReentrancyGuardUpgradeable, OwnableUpgradea
         require(!isStakePoolStarted(_stakePoolId), "The pool no longer accepts staking. It has already started.");
 
         require(!isStakePoolEnded(_stakePoolId), "Staking is ended.");
+        require(_amount <= _stakePool[_stakePoolId].allocatedAmount, "Amount must be lower then allocated amount.");
 
-        require(_amount <= _stakePool[_stakePoolId].maxStakingLimit, "Max staking token limit reached");
+
+        console.log("_stakePool[_stakePoolId].allocatedAmount", _stakePool[_stakePoolId].allocatedAmount);
+
+
+        require(usersTotalStakeAmountInPool+_amount  <= _stakePool[_stakePoolId].allocatedAmount , "You have already reached the amount threshold.");
+
 
         require(_amount <= _stakePool[_stakePoolId].allocatedAmount, "Amount must be lower then allocated amount.");
+
+        require(_amount <= _stakePool[_stakePoolId].maxStakingLimit, "Max staking token limit reached");
 
         require(_amount >= _stakePool[_stakePoolId].minStakingAmount, "Stake Amount must be greater than min. amount allowed.");
     }
@@ -191,7 +201,7 @@ contract GptVerseDistributedStake is ReentrancyGuardUpgradeable, OwnableUpgradea
         
 
         //Some validations
-        checkStakingConditions(_amount, _stakePoolId);
+        checkStakingConditions(_amount, _stakePoolId, userAddress);
 
         bool isUserExistsInThePool = _users[_stakePoolId][userAddress].account != address(0);
  

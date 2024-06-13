@@ -80,6 +80,11 @@ describe('Distributed Stake Token Contract', function () {
       'test1',
     );
     await stakeContract.stakeToken(
+      user3.address,
+      parseUnits('50', 18),
+      'test1',
+    );
+    await stakeContract.stakeToken(
       user4.address,
       parseUnits('50', 18),
       'test1',
