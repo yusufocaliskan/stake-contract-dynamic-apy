@@ -259,7 +259,6 @@ contract GptVerseDistributedStake is ReentrancyGuardUpgradeable, OwnableUpgradea
         return false;
     }
 
-
     function calculateReward( string memory _stakePoolId,  uint256 _usersTotalStakeAmountInPool) public view returns(uint256) {
         
         uint256 stakeEndDate = _stakePool[_stakePoolId].endDate;
@@ -292,11 +291,20 @@ contract GptVerseDistributedStake is ReentrancyGuardUpgradeable, OwnableUpgradea
         
         uint256 scaledMaxAPY = maxAPY * 1e18; 
 
+        console.log("scaledMaxAPY", (scaledMaxAPY * _stakedAmount));
+        console.log("totalStakedAmountOfPool", totalStakedAmountOfPool);
+        console.log("_stakedAmount", _stakedAmount);
+
         uint256 apy = (scaledMaxAPY * _stakedAmount) / totalStakedAmountOfPool;
 
+
+        // uint256  apy = (allocatedAmount * _stakedAmount * maxAPY) / totalStakedAmountOfPool ;
+        console.log("APYYYY", apy);
         uint result = apy / 1e18;
         
         result= result > minAPY ? result : minAPY;
+        console.log("Result APY", result);
+
         return result;
 
     }

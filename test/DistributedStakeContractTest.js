@@ -66,7 +66,7 @@ describe('Distributed Stake Token Contract', function () {
 
     await stakeContract.stakeToken(
       user1.address,
-      parseUnits('50', 18),
+      parseUnits('100', 18),
       'test1',
     );
     await stakeContract.stakeToken(
@@ -79,11 +79,11 @@ describe('Distributed Stake Token Contract', function () {
       parseUnits('50', 18),
       'test1',
     );
-    // await stakeContract.stakeToken(
-    //   user4.address,
-    //   parseUnits('100', 18),
-    //   'test1',
-    // );
+    await stakeContract.stakeToken(
+      user4.address,
+      parseUnits('50', 18),
+      'test1',
+    );
     // await stakeContract.stakeToken(
     //   user5.address,
     //   parseUnits('100', 18),
@@ -111,8 +111,8 @@ describe('Distributed Stake Token Contract', function () {
     tx = await stakeContract.claimReward4Total(user3.address, 'test1');
     await tx.wait();
 
-    // tx = await stakeContract.claimReward4Total(user4.address, 'test1');
-    // await tx.wait();
+    tx = await stakeContract.claimReward4Total(user4.address, 'test1');
+    await tx.wait();
 
     // tx = await stakeContract.claimReward4Total(user5.address, 'test1');
     // await tx.wait();
