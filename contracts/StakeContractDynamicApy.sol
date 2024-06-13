@@ -9,7 +9,7 @@ import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol
 
 import "hardhat/console.sol";
 
-contract GptVerseDistributedStake is ReentrancyGuardUpgradeable, OwnableUpgradeable, UUPSUpgradeable{
+contract StakeContractDynamicApy is ReentrancyGuardUpgradeable, OwnableUpgradeable, UUPSUpgradeable{
 
     string public constant VERSION= "1.0";
 
@@ -89,11 +89,6 @@ contract GptVerseDistributedStake is ReentrancyGuardUpgradeable, OwnableUpgradea
 
     //================== MODIFIERS ========================
 
-    //Chekcs if the address has enought balance
-    modifier whenTreasuryHasBalance(uint256 amount){
-        require(_token.balanceOf(address(this)) >= amount, "Insufficient funds in the treasury.");
-        _;
-    }
 
     function setTokenAddress(address tokenAddress_) public  onlyOwner{
         _tokenAddress = tokenAddress_;
@@ -178,9 +173,6 @@ contract GptVerseDistributedStake is ReentrancyGuardUpgradeable, OwnableUpgradea
 
         require(!isStakePoolEnded(_stakePoolId), "Staking is ended.");
         require(_amount <= _stakePool[_stakePoolId].allocatedAmount, "Amount must be lower then allocated amount.");
-
-
-        console.log("_stakePool[_stakePoolId].allocatedAmount", _stakePool[_stakePoolId].allocatedAmount);
 
 
         require(usersTotalStakeAmountInPool+_amount  <= _stakePool[_stakePoolId].allocatedAmount , "You have already reached the amount threshold.");

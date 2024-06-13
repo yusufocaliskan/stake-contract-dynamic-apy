@@ -53,7 +53,7 @@ describe('Distributed Stake Token Contract', function () {
       parseUnits('1000', 18), //max
       parseUnits('100', 18), //allocatedAmount
       100, //minAPY 1%
-      10000, //maxAPY 50%
+      10000, //maxAPY 100% //All the allocated tokens will be distributed
     );
   });
 
